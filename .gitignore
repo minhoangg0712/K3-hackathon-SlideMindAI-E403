@@ -19,8 +19,8 @@ __pycache__/
 .env.*
 !.env.example
 
-# --- Kết quả chạy eval: giữ summary đã commit, bỏ log thô ---
-eval/runs/
+# Kết quả eval được commit có chủ ý: đó là bằng chứng của mốc nộp bài,
+# trợ giảng mở eval/ để đối chiếu số nhóm khai với bảng thật.
 
 # --- Hệ điều hành ---
 .DS_Store
