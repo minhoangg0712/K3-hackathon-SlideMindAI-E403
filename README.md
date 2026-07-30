@@ -325,5 +325,5 @@ Trong đó:
 - Không commit file `.env.local`.
 - File PDF slide và cơ sở dữ liệu nằm trong `.gitignore` — chạy `npm run setup` để sinh lại.
 - Chỉ sử dụng chế độ `mock` khi cần demo giao diện hoặc kiểm thử offline.
-- Luôn dùng `GEMINI_API_KEY` thật trong buổi demo chính thức để chứng minh hệ thống có lời gọi AI thật.
-- Số liệu eval phải là số thật. Bảng kết quả trong `eval/runs/` có đủ cả câu fail để đối chiếu.
+- Luôn sử dụng chế độ `openai` trong buổi demo chính thức để chứng minh hệ thống có lời gọi AI thật.
+````
