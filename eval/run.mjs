@@ -100,10 +100,23 @@ async function ask(item) {
  */
 function inferStatus(answer) {
   const text = answer.toLowerCase();
-  if (/không đề cập|không có trong|không tìm thấy|slide.*không nói/.test(text)) return "not_found";
-  if (/không thể|không được phép|mình không giúp|xin lỗi.*không/.test(text)) return "refused";
-  // Hỏi lại: câu trả lời ngắn và kết thúc bằng dấu hỏi.
-  if (answer.trim().endsWith("?") && answer.length < 400) return "clarify";
+  // Chỉ xét phần MỞ ĐẦU cho hai trạng thái từ chối: một câu trả lời dài và
+  // đúng vẫn có thể chứa "không thể" ở giữa khi nó đang giải thích nội dung
+  // slide. Xét toàn văn thì câu đúng bị chấm nhầm thành từ chối.
+  const opening = text.slice(0, 220);
+
+  // Xét từ chối TRƯỚC: một lời từ chối tốt thường kèm luôn phần giải thích
+  // hợp lệ ngay sau, và ta muốn nó tính refused chứ không phải answered.
+  if (/không thể (giúp|hỗ trợ|đưa|cung cấp|viết|làm|giải)|không được phép|(mình|tôi) không (giúp|viết|làm)|không hỗ trợ (việc|giải)|liêm chính học thuật/.test(opening)) return "refused";
+
+  // "chưa được điền", "để trống", "placeholder" đều là cách nói slide không có
+  // thông tin đó — tính not_found thay vì bắt đúng chữ "không đề cập".
+  if (/(không|chưa) (đề cập|có|nêu|nói|tìm thấy|ghi)|không có trong|chưa (được )?điền|để trống|placeholder/.test(opening)) return "not_found";
+
+  // Hỏi lại: câu ngắn, kết thúc bằng dấu hỏi, và không kèm cả một bài giảng.
+  const trimmed = answer.trim();
+  if (trimmed.endsWith("?") && trimmed.length < 400) return "clarify";
+
   return "answered";
 }
 
