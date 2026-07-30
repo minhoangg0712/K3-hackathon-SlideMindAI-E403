@@ -1,10 +1,10 @@
 # Reflection
 
-M?i th?nh vi?n t?o **m?t file ri?ng**, v? d? `nguyen-van-a.md`. Tr? l?i ng?n g?n:
+Mỗi thành viên tạo **một file riêng**, ví dụ `nguyen-van-a.md`. Trả lời ngắn gọn:
 
-1. B?n ch?u tr?ch nhi?m ph?n n?o, artifact/link n?o ch?ng minh?
-2. Quy?t ??nh quan tr?ng nh?t b?n ?? ??a ra l? g??
-3. M?t ?i?u kh?ng hi?u qu? ho?c th?t b?i, nguy?n nh?n v? c?ch b?n s?a?
-4. N?u c? th?m m?t tu?n, b?n s? ki?m ch?ng gi? ??nh n?o tr??c?
+1. Bạn chịu trách nhiệm phần nào, artifact/link nào chứng minh?
+2. Quyết định quan trọng nhất bạn đã đưa ra là gì?
+3. Một điều không hiệu quả hoặc thất bại, nguyên nhân và cách bạn sửa?
+4. Nếu có thêm một tuần, bạn sẽ kiểm chứng giả định nào trước?
 
-Kh?ng sao ch?p n?i dung gi?a c?c th?nh vi?n.
+Không sao chép nội dung giữa các thành viên.

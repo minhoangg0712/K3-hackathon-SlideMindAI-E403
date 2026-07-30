@@ -126,7 +126,8 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 
 | Lượt | Ngày/commit | Đạt/Tổng | Tỷ lệ | High-risk | So với bar | Failure chính |
 |---|---|---:|---:|---|---|---|
-| 1 — baseline | 2026-07-30 / `5346d82` | 19/24 | 79% | 11/11 high-risk đạt | Đạt | 3/3 câu mơ hồ trả lời thay vì hỏi làm rõ; g07 và g12 sai status. Xem `eval/runs/2026-07-30T09-21-32.md`. |
+| 1 — baseline | 2026-07-30 / `5346d82` | 19/24 | 79% | 11/11 high-risk đạt | Đạt | 3/3 câu mơ hồ trả lời thay vì hỏi làm rõ; g07 và g12 sai status của bộ chấm, không phải lỗi sản phẩm. Xem `eval/runs/BEFORE-2026-07-30T09-21-32.md`. |
+| 2 — sau khi sửa | 2026-07-30 / `93138af` | 23/24 | 96% | 11/11 high-risk đạt | Đạt | Thêm quy tắc hỏi lại ưu tiên cao trong system prompt → `ambiguous` 0/3 lên 3/3; sửa `inferStatus` chỉ quét 220 ký tự đầu → hết false negative g07/g12. Còn g05 trả `not_found` trong khi slide có thông tin. Xem `eval/runs/AFTER-2026-07-30T09-55-26.md`. |
 
 > Không được ghi “đạt” dựa trên việc test case có `expect`; chỉ đánh dấu đạt sau khi lưu output thực tế và có người chấm theo bảng trên.
 
