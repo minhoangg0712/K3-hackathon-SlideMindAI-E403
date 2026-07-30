@@ -1,0 +1,32 @@
+# Demo deck ? Insight Copilot (6 slides)
+
+## 1. V?n ??
+- Meeting notes d?i, thi?u c?u tr?c
+- Quy?t ??nh, vi?c l?m v? r?i ro d? b? b? s?t
+- M?c ti?u: r?t insight ??ng ki?m tra trong v?i gi?y
+
+## 2. Ng??i d?ng & insight
+- PM, founder, research team
+- C?n chuy?n note th? th?nh quy?t ??nh v? next steps
+- Kh?ng c?n m?t chatbot chung chung; c?n output c? evidence
+
+## 3. Gi?i ph?p
+- D?n note + c?u h?i t?y ch?n
+- AI tr? summary, decisions, action items, risks
+- Evidence tr?ch nguy?n v?n ?? ng??i d?ng ??i chi?u
+
+## 4. Demo lu?ng ch?y th?t
+1. ??t `AI_PROVIDER=openai` v? API key
+2. D?n meeting note v?o web app
+3. G?i `/api/analyze` ? Responses API
+4. UI hi?n ?OpenAI ? live? c?ng output c? c?u tr?c
+
+## 5. ??nh gi? & validation
+- Golden set: 5 t?nh hu?ng v? rubric r? r?ng
+- Quality bar: evidence kh?ng b?a; action items ? 4/5 case
+- User test: log ph?n h?i v? thay ??i sau test
+
+## 6. Roadmap & l?i m?i demo
+- H?m nay: text note ? insight c? evidence
+- Ti?p theo: upload t?i li?u, workspace, human review
+- QR/link repo: `TH?M_LINK_GITHUB`

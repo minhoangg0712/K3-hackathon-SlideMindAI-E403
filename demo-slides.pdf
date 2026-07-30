@@ -1,0 +1,105 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R 11 0 R 13 0 R 15 0 R] /Count 6 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 186 >>
+stream
+BT /F1 30 Tf 72 740 Td (Insight Copilot) Tj ET
+BT /F1 18 Tf 92 680 Td (? T? meeting note th? ??n insight c? evidence) Tj ET
+BT /F1 18 Tf 92 638 Td (? Demo prototype AI ? Hackathon) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 253 >>
+stream
+BT /F1 30 Tf 72 740 Td (V?n ??) Tj ET
+BT /F1 18 Tf 92 680 Td (? Meeting note d?i v? r?i r?c.) Tj ET
+BT /F1 18 Tf 92 638 Td (? Quy?t ??nh, vi?c c?n l?m, r?i ro d? b? b? s?t.) Tj ET
+BT /F1 18 Tf 92 596 Td (? ??i ng? m?t th?i gian t?ng h?p th? c?ng.) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 257 >>
+stream
+BT /F1 30 Tf 72 740 Td (Gi?i ph?p) Tj ET
+BT /F1 18 Tf 92 680 Td (? D?n note v? c?u h?i t?y ch?n.) Tj ET
+BT /F1 18 Tf 92 638 Td (? AI tr? summary, decisions, action items, risks.) Tj ET
+BT /F1 18 Tf 92 596 Td (? Evidence tr?ch nguy?n v?n ?? ??i chi?u.) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 261 >>
+stream
+BT /F1 30 Tf 72 740 Td (Demo ch?y th?t) Tj ET
+BT /F1 18 Tf 92 680 Td (? AI_PROVIDER=openai + OPENAI_API_KEY.) Tj ET
+BT /F1 18 Tf 92 638 Td (? POST /api/analyze g?i OpenAI Responses API.) Tj ET
+BT /F1 18 Tf 92 596 Td (? Giao di?n hi?n badge OpenAI ? live.) Tj ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 10 0 R >>
+endobj
+12 0 obj
+<< /Length 266 >>
+stream
+BT /F1 30 Tf 72 740 Td (??nh gi?) Tj ET
+BT /F1 18 Tf 92 680 Td (? Golden set + rubric trong eval/.) Tj ET
+BT /F1 18 Tf 92 638 Td (? Quality bar: evidence kh?ng b?a, schema h?p l?.) Tj ET
+BT /F1 18 Tf 92 596 Td (? Feedback user test ???c ghi trong validation/.) Tj ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 12 0 R >>
+endobj
+14 0 obj
+<< /Length 258 >>
+stream
+BT /F1 30 Tf 72 740 Td (Roadmap) Tj ET
+BT /F1 18 Tf 92 680 Td (? H?m nay: note v?n b?n ? insight c? c?u tr?c.) Tj ET
+BT /F1 18 Tf 92 638 Td (? Ti?p theo: upload t?i li?u, workspace, human review.) Tj ET
+BT /F1 18 Tf 92 596 Td (? Repo: TH?M_LINK_GITHUB) Tj ET
+endstream
+endobj
+15 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 14 0 R >>
+endobj
+xref
+0 16
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000154 00000 n 
+0000000224 00000 n 
+0000000461 00000 n 
+0000000587 00000 n 
+0000000891 00000 n 
+0000001017 00000 n 
+0000001325 00000 n 
+0000001451 00000 n 
+0000001764 00000 n 
+0000001892 00000 n 
+0000002210 00000 n 
+0000002338 00000 n 
+0000002648 00000 n 
+trailer
+<< /Size 16 /Root 1 0 R >>
+startxref
+2776
+%%EOF
