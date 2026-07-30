@@ -1,7 +1,27 @@
+# --- Node / Next.js (codebase/) ---
+node_modules/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+
+# --- Python (còn sót từ template BTC) ---
 .venv/
 __pycache__/
 *.py[cod]
-.env
 .pytest_cache/
 .coverage
+
+# --- Bí mật ---
+.env
+.env.*
+!.env.example
+
+# --- Kết quả chạy eval: giữ summary đã commit, bỏ log thô ---
+eval/runs/
+
+# --- Hệ điều hành ---
 .DS_Store
+Thumbs.db

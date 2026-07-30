@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+/* Dark mode theo class trên <html>, khớp cách bản gốc VLearn làm. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Design token trích từ CSS build của vlearn.dev */
+  --color-vlearn-red: #d6222f;
+  --color-vlearn-red-dark: #b81824;
+  --color-vlearn-blue: #24679f;
+  --color-vlearn-navy: #124f8c;
+  --color-vlearn-navy-dark: #0b355f;
+  --color-vlearn-ink: #102a43;
+  --color-vlearn-ice: #eef4f8;
+
+  --font-sans: var(--font-app-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-app-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --animate-fade-in-lift: fade-in-lift 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Các trang dashboard/course dùng trực tiếp 2 mã này trong class, giữ nguyên
+   để đối chiếu 1:1 với bản gốc. Khai báo thêm ở đây cho chỗ nào cần var. */
+:root {
+  --vlearn-red: #d6222f;
+  --vlearn-red-dark: #b81824;
+  --vlearn-blue: #24679f;
+  --vlearn-navy: #124f8c;
+  --vlearn-navy-dark: #0b355f;
+  --vlearn-ink: #102a43;
+  --vlearn-ice: #eef4f8;
+}
+
+@keyframes fade-in-lift {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+html,
+body {
+  height: 100%;
+}
+
+/* Scrollbar mảnh cho sidebar và panel Tutor */
+@utility scrollbar-thin-vlearn {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-slate-300) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-slate-300);
+    border-radius: 9999px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+.dark .scrollbar-thin-vlearn {
+  scrollbar-color: var(--color-slate-700) transparent;
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-slate-700);
+  }
+}
