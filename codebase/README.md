@@ -1,4 +1,4 @@
-# VLearn Tutor — cải tiến AI Assistant của VLearn
+# VLearn Tutor — trợ lý học tập có citation kiểm chứng được
 
 Bản dựng lại giao diện VLearn (`https://www.vlearn.dev`) chạy độc lập, dùng làm nền để cải tiến trợ lý học tập **VLearn Tutor** cho hackathon Day 5–6, khóa VinUni AI Thực Chiến.
 
@@ -16,7 +16,7 @@ Bản dựng lại giao diện VLearn (`https://www.vlearn.dev`) chạy độc l
 npm install
 npm run setup          # copy worker/font pdfjs + sinh slide placeholder
 Copy-Item .env.example .env.local
-# mở .env.local, điền ANTHROPIC_API_KEY
+# mở .env.local, điền GEMINI_API_KEY
 npm run dev
 ```
 
@@ -54,10 +54,10 @@ Frontend giữ nguyên path và shape response của backend VLearn thật, nên
 ## 4. Lời gọi AI
 
 - Endpoint: `POST /api/backend/api/v1/tutor/agent` — `app/api/backend/api/v1/tutor/agent/route.ts`.
-- Model: `claude-opus-5` qua `@anthropic-ai/sdk`, streaming + adaptive thinking, `effort: medium`.
+- Model: Gemini qua `@google/genai`, streaming và model cascade cấu hình bởi `GEMINI_MODEL_CASCADE`.
 - Giao thức: **AG-UI qua SSE**, cùng shape bản gốc: `RUN_STARTED` → `TOOL_CALL_*` → `TEXT_MESSAGE_CONTENT` (từng chữ) → `STATE_SNAPSHOT` → `RUN_FINISHED` / `RUN_ERROR`.
 - Truy hồi: `search_slides` đọc text layer của chính file PDF đang mở (`lib/slide-index.ts`), chấm điểm theo token trùng, cộng điểm cho trang người học đang xem, luôn kèm trang hiện tại.
-- Dấu hiệu kiểm chứng khi demo: badge `Claude · live` cạnh câu trả lời (không phải `MOCK`); `STATE_SNAPSHOT.provider === "anthropic"` và `snapshot.usage` có token thật; terminal không log `[slide-index]` lỗi.
+- Dấu hiệu kiểm chứng khi demo: UI hiển thị tên model Gemini thật (không phải `MOCK`); `STATE_SNAPSHOT.provider === "gemini"` và `snapshot.usage` có token thật; terminal không log `[slide-index]` lỗi.
 
 ## 5. Điểm yếu của bản gốc và hướng đã xử lý
 
@@ -86,4 +86,4 @@ Có ở bản gốc, **không** dựng lại: bút/highlight/note trên PDF, fla
 - [ ] `validation/feedback-log.md` — tối thiểu 3 user test.
 - [ ] `reflection/` — phản tư từng thành viên.
 - [ ] `demo-slides.md` → xuất `demo-slides.pdf`.
-- [ ] Chạy `AI_PROVIDER` thật trên máy demo, chụp ảnh response có badge `Claude · live`.
+- [ ] Chạy Gemini live trên máy demo, chụp ảnh response có tên model thật.

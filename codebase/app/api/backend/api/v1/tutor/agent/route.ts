@@ -89,13 +89,13 @@ function confidenceFrom(hits: SlideHit[], answer: string): number {
  */
 function mockAnswer(question: string, hits: SlideHit[], fileName: string): string[] {
   const chunks: string[] = [
-    "**Chế độ mock — chưa cấu hình ANTHROPIC_API_KEY, nên đây không phải câu trả lời do AI sinh ra.**\n\n",
+    "**Chế độ mock — chưa cấu hình GEMINI_API_KEY, nên đây không phải câu trả lời do AI sinh ra.**\n\n",
   ];
 
   if (hits.length === 0) {
     chunks.push(
       `Mình không tìm được đoạn nào trong ${fileName || "tài liệu"} khớp với câu hỏi "${question}".\n\n`,
-      "Hãy thử bôi đen một đoạn cụ thể trên slide, hoặc đặt ANTHROPIC_API_KEY trong .env.local để Tutor trả lời thật.",
+      "Hãy thử bôi đen một đoạn cụ thể trên slide, hoặc đặt GEMINI_API_KEY trong .env.local để Tutor trả lời thật.",
     );
     return chunks;
   }
@@ -184,7 +184,7 @@ export async function POST(request: Request) {
           sse({ type: "TOOL_CALL_END", toolCallId }, controller);
         }
 
-        // --- Gọi Claude ----------------------------------------------------
+        // --- Gọi Gemini ----------------------------------------------------
         const contextBlock = [
           fileName ? `Tài liệu: ${fileName}` : "",
           scope?.page_number ? `Người học đang mở trang ${scope.page_number}.` : "",

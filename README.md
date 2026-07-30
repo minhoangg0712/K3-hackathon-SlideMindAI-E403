@@ -19,8 +19,8 @@
 | # | Hạng mục | Người phụ trách | Trạng thái |
 |---|---|---|---|
 | 1 | `README.md` — thành viên, phân công | Huy | ✅ |
-| 2 | `spec.md` — bài toán, bằng chứng, lát cắt, quality bar | Nam | ⬜ |
-| 3 | `demo-slides.pdf` — 6 trang | Lâm | ⬜ |
+| 2 | `spec.md` — bài toán, bằng chứng, lát cắt, quality bar | Nam | 🔄 Cần chốt tên nhóm/validation |
+| 3 | `demo-slides.pdf` — 6 trang | Lâm | 🔄 Cần xuất lại từ deck đã đồng bộ |
 | 4 | `codebase/` — prototype, ghi rõ phần nào là mock | Hoàng, Huy | 🔄 |
 | 5 | `eval/` — golden set và kết quả các lượt chạy | Hoàng, Huy | ✅ 24 câu, đã chạy 19/24 |
 | 6 | `validation/` — feedback log vòng user test | Hiệu | ⬜ |
@@ -313,8 +313,8 @@ Trong đó:
 - [ ] Chạy thử ít nhất một input thật trên máy demo.
 - [ ] Chụp màn hình kết quả có tên model thật (không phải `MOCK`).
 - [ ] Thực hiện tối thiểu 3 user test và cập nhật `validation/feedback-log.md`.
-- [ ] Hoàn thiện `spec.md`.
-- [ ] Hoàn thiện `demo-slides.md` và xuất `demo-slides.pdf` — 6 trang.
+- [ ] Điền tên nhóm/zone còn thiếu và hoàn tất validation trong `spec.md`.
+- [ ] Xuất lại `demo-slides.pdf` từ `demo-slides.md` — 6 trang.
 - [ ] Mỗi thành viên nộp một file trong `reflection/`.
 
 ---
@@ -325,5 +325,4 @@ Trong đó:
 - Không commit file `.env.local`.
 - File PDF slide và cơ sở dữ liệu nằm trong `.gitignore` — chạy `npm run setup` để sinh lại.
 - Chỉ sử dụng chế độ `mock` khi cần demo giao diện hoặc kiểm thử offline.
-- Luôn sử dụng chế độ `openai` trong buổi demo chính thức để chứng minh hệ thống có lời gọi AI thật.
-````
+- Trong buổi demo chính thức, dùng Gemini live và kiểm tra UI hiển thị tên model; không trình bày `MOCK` là AI thật.

@@ -1,14 +1,21 @@
-# Feedback log ? User validation
+# Feedback log — User validation VLearn Tutor
 
-> Kh?ng ghi d? li?u nh?y c?m. M?i h?ng l? m?t phi?n test c? th?t; thay d? li?u m?u b?ng k?t qu? th?c t?.
+> Chỉ ghi phiên test có thật; dùng mã ẩn danh, không ghi dữ liệu cá nhân nhạy cảm. Người test phải là người ngoài nhóm. Không điền kết quả giả để đủ số lượng.
 
-| Ng?y | Ng??i test / vai tr? | K?ch b?n | Provider | Ho?n th?nh? | ?i?m h?u ?ch (1?5) | Feedback nguy?n v?n/t?m t?t | Thay ??i sau test |
-|---|---|---|---|---|---:|---|---|
-| `YYYY-MM-DD` | `PM ?n danh` | D?n note sprint | `openai/mock` | `C?/Kh?ng` | `?` | `Ch?a th?c hi?n` | `?` |
-| `YYYY-MM-DD` | `Founder ?n danh` | T?m quy?t ??nh | `openai/mock` | `C?/Kh?ng` | `?` | `Ch?a th?c hi?n` | `?` |
-| `YYYY-MM-DD` | `Researcher ?n danh` | T?m r?i ro | `openai/mock` | `C?/Kh?ng` | `?` | `Ch?a th?c hi?n` | `?` |
+## Kịch bản test chuẩn
 
-## C?u h?i ph?ng v?n
-1. Output n?o h?u ?ch nh?t v? v? sao?
-2. C? chi ti?t n?o sai, thi?u, ho?c kh?ng c? trong note kh?ng?
-3. B?n c? d?ng c?ng c? n?y trong tu?n t?i kh?ng? Trong t?nh hu?ng n?o?
+1. Người dùng tự mở COMP2010 → Đọc Slide và hoàn thành một nhiệm vụ: hiểu khái niệm, kiểm tra thông tin không có trong slide, hoặc phản hồi một câu hỏi mơ hồ.
+2. Không hướng dẫn cách dùng Tutor trong lúc họ thực hiện, trừ khi họ yêu cầu hỗ trợ kỹ thuật.
+3. Ghi provider/model đang hiển thị, câu hỏi, kết quả, thời gian hoàn thành và feedback sau phiên.
+
+| Ngày | Người test / vai trò | Kịch bản & trang | Câu hỏi | Provider / model | Hoàn thành? | Hữu ích (1–5) | Có tin kết quả? Vì sao? | Feedback / thay đổi sau test |
+|---|---|---|---|---|---|---:|---|---|
+| `YYYY-MM-DD` | `Học viên A (ẩn danh)` | `Hiểu ReAct, trang 22` | `Vòng lặp ReAct gồm những bước nào?` | `gemini / …` | `—` | `—` | `—` | `Chưa thực hiện` |
+| `YYYY-MM-DD` | `Học viên B (ẩn danh)` | `Kiểm tra thiếu nguồn, trang 21` | `Learning rate là bao nhiêu?` | `gemini / …` | `—` | `—` | `—` | `Chưa thực hiện` |
+| `YYYY-MM-DD` | `Học viên C (ẩn danh)` | `Câu mơ hồ, trang 17` | `Cái này là gì?` | `gemini / …` | `—` | `—` | `—` | `Chưa thực hiện` |
+
+## Câu hỏi phỏng vấn sau test
+
+1. Điều gì khó hiểu hoặc khó chịu nhất khi dùng Tutor?
+2. Bạn có tin câu trả lời và citation không? Vì sao?
+3. Bạn có dùng tính năng này khi học thật không? Trong tình huống nào?

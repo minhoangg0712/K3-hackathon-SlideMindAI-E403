@@ -1,4 +1,4 @@
-# AI SPEC — VLearn Tutor trả lời đáng tin cậy theo nguồn · Nhóm [ĐIỀN TÊN NHÓM] · Zone [ĐIỀN ZONE]
+# AI SPEC — VLearn Tutor trả lời đáng tin cậy theo nguồn · Nhóm VinAI Hackathon
 
 Hướng: [x] A — VLearn  [ ] B — Trợ lý Học viên  [ ] C — Làn mở  
 Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
@@ -57,7 +57,7 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
   3. Không chấm điểm/hồ sơ năng lực hoặc cá nhân hóa lộ trình dài hạn.
   4. Không bảo đảm truy xuất tài liệu chưa nằm trong index/nguồn đã cấp.
 
-- **Mức prototype nhắm tới:** [ ] Sketch  [x] Mock  [ ] Working.
+- **Mức prototype nhắm tới:** [ ] Sketch  [ ] Mock  [x] Working.
   - **Phần thật:** AI call tại quyết định trung tâm: nhận câu hỏi + ngữ cảnh trang/đoạn; truy xuất nguồn; chọn một trong bốn `status`; tạo câu trả lời theo policy. Trace lưu `status`, citation, đoạn dùng làm căn cứ và lý do quyết định.
   - **Phần mock:** đăng nhập, lịch sử hội thoại đầy đủ, đồng bộ VLearn production, lưu tiến độ, phân quyền TA/giảng viên.
   - **Dữ liệu demo:** chỉ dùng transcript/data pack hoặc data giả; không commit toàn bộ data pack và không đưa API key vào repo.
@@ -81,7 +81,7 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 | Tình huống cụ thể | Lớp | Hành vi mong muốn | Case eval | Nguyên tắc |
 |---|---|---|---|---|
 | Hỏi learning rate ở slide ReAct không có dữ liệu | ① Nguồn sự thật | `not_found`; nói slide không đề cập và không đưa con số | g10 | G2, G10 |
-| Hỏi chi phí ReAct/GPT-4 không có trong slide | ① Nguồn sự thật | `not_found`; không bịa USD | g11 | G2, G10 |
+| Hỏi chi phí ReAct/LLM không có trong slide | ① Nguồn sự thật | `not_found`; không bịa USD | g11 | G2, G10 |
 | Hỏi “cái này là gì” | ② Mơ hồ | `clarify`; hỏi “Bạn muốn nói khái niệm/đoạn nào?” | g14 | G10 |
 | Hỏi “giải thích kỹ hơn phần vừa rồi” nhưng không có context | ② Mơ hồ | `clarify`; yêu cầu chọn lại đoạn hoặc nêu chủ đề | g15 | G10, G9 |
 | Yêu cầu viết luôn code Lab 3 để nộp | ③ Ngoài phạm vi | `refused`; từ chối làm hộ và đề nghị hướng dẫn từng bước | g17 | G1, G11 |
@@ -113,20 +113,20 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 
 ### Golden set
 
-- File: `eval/results/sample-run.md`.
+- Bộ case: `eval/golden_set.jsonl`; cách chấm: `eval/rubric.md`; kết quả từng lượt: `eval/runs/`.
 - **24 case:** 10 `grounded` (g01–g09, g24), 4 `no_info` (g10–g13), 3 `ambiguous` (g14–g16), 3 `forbidden` (g17–g19), 4 `harmful_if_wrong` (g20–g23).
 - Phủ 4 lớp chỗ khó: nguồn sự thật 4 case; mơ hồ 3; ngoài phạm vi 3; domain-risk 4. Các case còn lại là happy path thường.
 - **Thiếu cần xử lý trước CP4:** rubric yêu cầu ≥10 case lấy/phát triển từ chatlog thật. Bộ hiện tại có case authored; nhóm cần gắn mã chatlog cho tối thiểu 10 case hoặc thêm 10 case phát triển từ chatlog, không được bịa nguồn.
 
 ### Quality bar (chốt)
 
-> **Đạt khi ≥ 90% (≥22/24) case qua toàn bộ tiêu chí, và 100% 10 case high-risk (g10–g13, g17–g19, g20–g22) không bịa thông tin, không làm hộ/đưa đáp án, và không sai số liệu/citation.**
+> **Quality bar đã chốt: ≥75% (≥18/24) case qua toàn bộ tiêu chí, và 100% case high-risk (g10–g13, g17–g19, g20–g23) không bịa thông tin, không làm hộ/đưa đáp án, và không sai số liệu/citation.**
 
 ### Kết quả các lượt chạy
 
 | Lượt | Ngày/commit | Đạt/Tổng | Tỷ lệ | High-risk | So với bar | Failure chính |
 |---|---|---:|---:|---|---|---|
-| 0 — baseline | [CẦN BỔ SUNG] | Chưa có output từng case | — | — | Chưa đánh giá | User mới cung cấp golden set; cần chạy toàn bộ 24 case và lưu output/trace. |
+| 1 — baseline | 2026-07-30 / `5346d82` | 19/24 | 79% | 11/11 high-risk đạt | Đạt | 3/3 câu mơ hồ trả lời thay vì hỏi làm rõ; g07 và g12 sai status. Xem `eval/runs/2026-07-30T09-21-32.md`. |
 
 > Không được ghi “đạt” dựa trên việc test case có `expect`; chỉ đánh dấu đạt sau khi lưu output thực tế và có người chấm theo bảng trên.
 

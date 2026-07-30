@@ -1,171 +1,89 @@
-# Demo Deck – Insight Copilot
+# Demo Deck — VLearn Tutor (6 slides)
+
+> Bản nội dung nguồn để xuất `demo-slides.pdf`. Thay `THÊM_LINK_GITHUB` trước khi nộp.
 
 ---
 
-# Slide 1. Vấn đề
+# Slide 1. Vấn đề: học viên không biết có nên tin câu trả lời AI
 
-## Bài toán
+- Học viên đọc slide trên VLearn và hỏi Tutor ngay trong lúc học.
+- Bundle và chatlog của sản phẩm gốc cho thấy **582/1.261 phản hồi (46,2%) không có citation**.
+- Một câu trả lời nghe hợp lý nhưng sai nguồn/sai trang có thể khiến người học hiểu sai hoặc trích dẫn sai.
 
-Các ghi chú cuộc họp (Meeting Notes) thường:
-
-- Dài và thiếu cấu trúc.
-- Khó xác định quyết định cuối cùng.
-- Dễ bỏ sót các công việc cần thực hiện.
-- Khó theo dõi rủi ro sau cuộc họp.
-
-### Mục tiêu
-
-Giúp người dùng rút ra các insight quan trọng chỉ trong vài giây thay vì phải đọc toàn bộ nội dung.
+**Mục tiêu:** Tutor chỉ trả lời khi có căn cứ, và chọn hành vi an toàn khi thiếu căn cứ.
 
 ---
 
-# Slide 2. Người dùng & Insight
+# Slide 2. Người dùng, job và lát cắt MVP
 
-## Đối tượng sử dụng
+**Người dùng:** học viên đang đọc slide khóa VinUni AI Thực Chiến trên VLearn.
 
-- Product Manager
-- Founder
-- Business Analyst
-- Research Team
+**Job:** xác minh và hiểu đúng một thông tin trong tài liệu trước khi tiếp tục học hoặc làm bài.
 
-## Nhu cầu
+**Lát cắt một câu:**
 
-Người dùng muốn chuyển đổi một bản ghi chú thô thành:
+> Học viên hỏi về đoạn/tài liệu đang mở → Tutor truy hồi slide liên quan → trả về đúng một trong bốn trạng thái: `answered`, `not_found`, `clarify`, hoặc `refused`.
 
-- Quyết định quan trọng (Decisions)
-- Việc cần làm (Action Items)
-- Rủi ro (Risks)
-- Tóm tắt ngắn gọn (Summary)
-
-Điều quan trọng là mọi kết quả đều có **Evidence** (đoạn trích từ văn bản gốc) để dễ dàng kiểm chứng.
+**Không làm trong MVP:** đăng nhập thật, lịch sử hội thoại đầy đủ, đồng bộ production, làm hộ bài nộp/kiểm tra.
 
 ---
 
-# Slide 3. Giải pháp
+# Slide 3. Giải pháp: VLearn Tutor có căn cứ
 
-## Insight Copilot
+1. Học viên mở slide COMP2010, có thể bôi đen đoạn cần hỏi.
+2. `search_slides` tìm text layer của PDF, ưu tiên trang đang xem.
+3. Gemini tạo câu trả lời theo policy: không bịa, hỏi lại khi mơ hồ, từ chối yêu cầu vi phạm liêm chính.
+4. UI hiển thị câu trả lời, trang nguồn, quote, confidence và tên model thực tế.
 
-Người dùng chỉ cần:
-
-1. Dán nội dung cuộc họp.
-2. (Tùy chọn) nhập câu hỏi cần AI tập trung.
-3. Nhấn **Analyze**.
-
-Hệ thống sẽ tự động phân tích và trả về:
-
-- 📝 Summary
-- 📌 Decisions
-- ✅ Action Items
-- ⚠️ Risks
-- 🔍 Evidence
-- 📊 Confidence Score
-
-Tất cả kết quả đều được trình bày theo cấu trúc rõ ràng, dễ đọc và dễ kiểm chứng.
+**Khác biệt:** citation được dựng từ chính slide đã truy hồi; không parse citation do model tự viết.
 
 ---
 
-# Slide 4. Demo luồng chạy AI thật
+# Slide 4. Demo AI chạy thật
 
-## Quy trình
-
-### Bước 1
-
-Cấu hình:
+## Thiết lập
 
 ```env
-AI_PROVIDER=openai
-OPENAI_API_KEY=YOUR_API_KEY
+GEMINI_API_KEY=YOUR_API_KEY
+GEMINI_MODEL_CASCADE=gemini-3.5-flash,gemini-3.5-flash-lite
 ```
 
-### Bước 2
+## Luồng demo
 
-Mở ứng dụng web và dán nội dung Meeting Note.
-
-### Bước 3
-
-Frontend gọi API:
-
-```http
-POST /api/analyze
-```
-
-Backend sử dụng **OpenAI Responses API** để phân tích dữ liệu.
-
-### Bước 4
-
-Giao diện hiển thị:
-
-- Badge **OpenAI • Live**
-- Summary
-- Decisions
-- Action Items
-- Risks
-- Evidence
-- Confidence
-
-Qua đó chứng minh hệ thống đang sử dụng AI thật thay vì dữ liệu giả lập.
+1. Chạy `npm run dev` và mở `http://localhost:3000`.
+2. Đi theo `/dashboard` → COMP2010 → Đọc Slide.
+3. Hỏi: **“Vòng lặp ReAct gồm những bước nào?”** tại trang 22.
+4. Endpoint `POST /api/backend/api/v1/tutor/agent` gọi Google Gemini API qua SSE.
+5. Kiểm chứng UI hiển thị **tên model thật**, citation trang 22 và không có nhãn `MOCK`.
 
 ---
 
-# Slide 5. Đánh giá & Validation
+# Slide 5. Đánh giá và validation
 
-## Đánh giá mô hình
+**Golden set: 24 câu**, gồm 5 nhóm: grounded (10), no-info (4), ambiguous (3), forbidden (3), harmful-if-wrong (4).
 
-Sử dụng bộ **Golden Set** gồm 5 tình huống thực tế.
+**Quality bar:** ≥75% case đạt và **100% case high-risk** không bịa số liệu/trích dẫn, không làm hộ hoặc đưa đáp án.
 
-Các tiêu chí đánh giá:
+**Kết quả baseline 30/07/2026:** **19/24 (79%)**; 11/11 high-risk đạt.
 
-- Summary đúng nội dung.
-- Evidence chính xác.
-- Action Items đầy đủ.
-- Risks hợp lý.
-
-## User Testing
-
-Thực hiện kiểm thử với người dùng và ghi nhận:
-
-- Mức độ dễ sử dụng.
-- Độ hữu ích của kết quả.
-- Các góp ý cải thiện hệ thống.
-
-Toàn bộ kết quả được lưu trong thư mục:
-
-```
-eval/
-validation/
-```
+- Điểm mạnh: no-info, forbidden và harmful-if-wrong được xử lý an toàn trong lượt baseline.
+- Điểm cần sửa: 3/3 câu mơ hồ bị trả lời thay vì hỏi lại; sẽ bổ sung guard trước bước sinh câu trả lời.
+- User test: tối thiểu 3 học viên ngoài nhóm, ghi nhiệm vụ, provider/model, feedback và thay đổi tại `validation/feedback-log.md`.
 
 ---
 
-# Slide 6. Roadmap & Demo
+# Slide 6. Roadmap và lời mời demo
 
-## Hoàn thành trong MVP
+## MVP đã có
 
-- Phân tích Meeting Notes.
-- Sinh Summary.
-- Trích xuất Decisions.
-- Gợi ý Action Items.
-- Phát hiện Risks.
-- Trích dẫn Evidence.
+- Prototype Next.js chạy local; truy hồi text slide PDF.
+- Gemini live khi có key; mock được gắn nhãn rõ ràng khi offline.
+- Citation/quote, confidence, policy 4 trạng thái và eval 24 case.
 
-## Hướng phát triển
+## Tiếp theo
 
-- Hỗ trợ upload PDF, DOCX.
-- Quản lý Workspace.
-- Lưu lịch sử phân tích.
-- Human Review trước khi xuất kết quả.
-- Hỗ trợ nhiều mô hình AI.
+- Sửa guard câu hỏi mơ hồ và chạy lại golden set.
+- Bổ sung ≥10 case phát triển từ chatlog/user test thật.
+- User test, đồng bộ VLearn thật và lưu quota phía server.
 
----
-
-## Repository
-
-GitHub:
-
-```
-THÊM_LINK_GITHUB
-```
-
-## Demo
-
-Quét QR Code hoặc truy cập GitHub để trải nghiệm Insight Copilot.
+**Repository:** `https://github.com/minhoangg0712/hackathon-VinAI`
