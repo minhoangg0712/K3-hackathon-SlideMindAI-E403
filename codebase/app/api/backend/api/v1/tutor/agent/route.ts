@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI } from "@google/genai";
 import { randomUUID } from "node:crypto";
 import { encodeAguiEvent, type AguiEvent, type AguiRequest } from "@/lib/agui";
 import { loadSlideDocument, searchSlides, type SlideHit } from "@/lib/slide-index";
@@ -8,7 +8,21 @@ export const runtime = "nodejs";
 /** Câu trả lời có thể dài; không để platform cắt stream sớm. */
 export const maxDuration = 120;
 
-const MODEL = "claude-opus-5";
+/**
+ * Cascade model: bậc trước hết quota hoặc lỗi thì tụt xuống bậc sau, cuối
+ * cùng mới là `mock`. Free tier của Gemini siết theo ngày và Google không
+ * còn công bố hạn mức, nên không hardcode một model duy nhất.
+ */
+const MODEL_CASCADE = (process.env.GEMINI_MODEL_CASCADE ?? "gemini-2.5-flash,gemini-2.5-flash-lite")
+  .split(",")
+  .map((name) => name.trim())
+  .filter(Boolean);
+
+/**
+ * Câu hỏi dài hơn ngưỡng này bị từ chối tường minh.
+ * Bản gốc `slice(0,2e3)` âm thầm và người học không hề biết mình mất chữ.
+ */
+export const QUESTION_MAX_CHARS = 2000;
 
 const SYSTEM_PROMPT = `Bạn là VLearn Tutor — trợ lý học tập của khóa "VinUni AI Thực Chiến", trả lời cho sinh viên đang đọc slide bài giảng.
 
@@ -20,6 +34,16 @@ Nguyên tắc:
 - Khi giải thích quy trình hoặc công thức, trình bày theo từng bước có số thứ tự.
 - Nếu người học bôi đen một đoạn, coi đó là trọng tâm câu hỏi.
 - Không bịa số liệu, tên riêng hay trích dẫn không có trong slide.
+
+Khi thông tin người học hỏi KHÔNG có trong <slide_context> và cũng không phải kiến thức
+nền chắc chắn, hãy nói thẳng là slide không đề cập. Thà nói không biết còn hơn bịa.
+
+Liêm chính học thuật: KHÔNG giải hộ bài kiểm tra, bài tập tính điểm, không đưa đáp án
+trắc nghiệm, không viết hộ bài nộp. Gặp yêu cầu đó thì từ chối ngắn gọn và đề nghị
+hướng dẫn cách tự làm.
+
+Khi câu hỏi mơ hồ hoặc thiếu ngữ cảnh (không rõ đang hỏi khái niệm nào, "cái này" là
+cái gì, trang nào), hãy HỎI LẠI một câu ngắn để làm rõ thay vì đoán bừa.
 
 Cuối câu trả lời, nếu có dùng nội dung slide, thêm một dòng cuối theo đúng định dạng:
 [nguồn] trang <số>, trang <số>`;
@@ -92,16 +116,23 @@ export async function POST(request: Request) {
     return Response.json({ detail: "invalid_json" }, { status: 400 });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   // `mock` chỉ để phát triển/demo offline và LUÔN được gán nhãn trên UI —
   // không bao giờ trình bày nó như AI chạy thật.
-  const provider: "anthropic" | "mock" =
-    process.env.TUTOR_PROVIDER === "mock" || !apiKey ? "mock" : "anthropic";
+  const provider: "gemini" | "mock" =
+    process.env.TUTOR_PROVIDER === "mock" || !apiKey ? "mock" : "gemini";
 
   const scope = body.forwardedProps?.scope;
   const question = body.messages.at(-1)?.content?.trim() ?? "";
   if (!question) {
     return Response.json({ detail: "empty_question" }, { status: 400 });
+  }
+  // Từ chối tường minh thay vì cắt câm: người học biết mình cần rút gọn.
+  if (question.length > QUESTION_MAX_CHARS) {
+    return Response.json(
+      { detail: "question_too_long", limit: QUESTION_MAX_CHARS, actual: question.length },
+      { status: 400 },
+    );
   }
 
   const messageId = `msg_${randomUUID()}`;
@@ -169,6 +200,10 @@ export async function POST(request: Request) {
         let usage:
           | { input_tokens: number; output_tokens: number; cache_read_input_tokens: number }
           | undefined;
+        /** Model thực sự trả lời — UI hiển thị đúng cái này, không hardcode. */
+        let modelUsed: string | undefined;
+        /** True khi phải tụt xuống bậc cascade thấp hơn; người dùng được báo. */
+        let degraded = false;
 
         const emit = (delta: string) => {
           answer += delta;
@@ -181,35 +216,60 @@ export async function POST(request: Request) {
             await new Promise((resolve) => setTimeout(resolve, 18));
           }
         } else {
-          const client = new Anthropic({ apiKey });
-          const claudeStream = client.messages.stream({
-            model: MODEL,
-            max_tokens: 4096,
-            thinking: { type: "adaptive" },
-            output_config: { effort: "medium" },
-            system: [
-              { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
-            ],
-            messages: [
-              { role: "user", content: contextBlock ? `${contextBlock}\n\n${question}` : question },
-            ],
-          });
+          const client = new GoogleGenAI({ apiKey });
 
-          claudeStream.on("text", emit);
-          const finalMessage = await claudeStream.finalMessage();
+          // Ngữ cảnh đi trong block riêng, câu hỏi giữ nguyên văn trong
+          // <question> — không ghép chuỗi, nên không có gì đẩy đuôi câu hỏi
+          // ra ngoài giới hạn như bản gốc.
+          const prompt = contextBlock
+            ? `${contextBlock}\n\n<question>\n${question}\n</question>`
+            : `<question>\n${question}\n</question>`;
 
-          if (finalMessage.stop_reason === "refusal") {
+          let lastError: unknown;
+          let answered = false;
+
+          for (const candidate of MODEL_CASCADE) {
+            try {
+              const responseStream = await client.models.generateContentStream({
+                model: candidate,
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                config: {
+                  systemInstruction: SYSTEM_PROMPT,
+                  temperature: 0.2,
+                  maxOutputTokens: 4096,
+                },
+              });
+
+              let usageMeta: { promptTokenCount?: number; candidatesTokenCount?: number; cachedContentTokenCount?: number } | undefined;
+              for await (const chunk of responseStream) {
+                if (chunk.text) emit(chunk.text);
+                if (chunk.usageMetadata) usageMeta = chunk.usageMetadata;
+              }
+
+              modelUsed = candidate;
+              degraded = candidate !== MODEL_CASCADE[0];
+              usage = {
+                input_tokens: usageMeta?.promptTokenCount ?? 0,
+                output_tokens: usageMeta?.candidatesTokenCount ?? 0,
+                cache_read_input_tokens: usageMeta?.cachedContentTokenCount ?? 0,
+              };
+              answered = true;
+              break;
+            } catch (cause) {
+              lastError = cause;
+              // Bậc này hỏng (hết quota, model không khả dụng) — thử bậc sau.
+              console.warn(`[tutor/agent] model ${candidate} lỗi:`, String(cause).slice(0, 200));
+            }
+          }
+
+          if (!answered) {
+            const message = String(lastError);
+            const code = /429|RESOURCE_EXHAUSTED|quota/i.test(message) ? "rate_limited" : "turn_failed";
             sse({ type: "TEXT_MESSAGE_END", messageId }, controller);
-            sse({ type: "RUN_ERROR", message: "guardrail_blocked" }, controller);
+            sse({ type: "RUN_ERROR", message: code }, controller);
             closeQuietly(controller);
             return;
           }
-
-          usage = {
-            input_tokens: finalMessage.usage.input_tokens,
-            output_tokens: finalMessage.usage.output_tokens,
-            cache_read_input_tokens: finalMessage.usage.cache_read_input_tokens ?? 0,
-          };
         }
 
         sse({ type: "TEXT_MESSAGE_END", messageId }, controller);
@@ -236,6 +296,8 @@ export async function POST(request: Request) {
               confidence: confidenceFrom(hits, answer),
               status: hits.length > 0 ? "answered" : "not_found",
               provider,
+              model: modelUsed,
+              degraded,
               usage,
             },
           },
