@@ -1,96 +1,255 @@
-# AI Startup Demo ? Insight Copilot
+````md
+# AI Startup Demo – Insight Copilot
 
-> Template repo public cho m?t d? ?n AI hackathon. Prototype c? **m?t l?i g?i AI th?t** khi c?u h?nh `OPENAI_API_KEY`; mock ch? l? ph??ng ?n d? ph?ng ?? demo giao di?n offline.
+> Template repository công khai cho một dự án AI Hackathon. Prototype có **một lời gọi AI thật** khi cấu hình `OPENAI_API_KEY`; chế độ `mock` chỉ là phương án dự phòng để demo giao diện khi không có kết nối hoặc chưa có API key.
 
-## 1. ??i ng? & ph?n c?ng
+---
 
-| Th?nh vi?n | M? h?c vi?n | Vai tr? | Ph?n ph? tr?ch |
-|---|---|---|---|
-| `H? T?N 1` | `M? S?` | Product/PM | B?i to?n, user test, pitch |
-| `H? T?N 2` | `M? S?` | AI Engineer | Prompt, model, evaluation |
-| `H? T?N 3` | `M? S?` | Full-stack | API, giao di?n, deploy |
+# 1. Đội ngũ & phân công
 
-> Thay c?c ? `H? T?N` v? `M? S?` tr??c khi public repo.
+| Thành viên | Mã học viên | Vai trò | Phụ trách |
+|------------|-------------|----------|-----------|
+| `HỌ TÊN 1` | `MÃ SỐ` | Product Manager | Phân tích bài toán, User Testing, Pitch |
+| `HỌ TÊN 2` | `MÃ SỐ` | AI Engineer | Prompt Engineering, Model Integration, Evaluation |
+| `HỌ TÊN 3` | `MÃ SỐ` | Full-stack Developer | Backend API, Frontend, Deploy |
 
-## 2. V?n ?? & gi?i ph?p
+> **Lưu ý:** Thay toàn bộ `HỌ TÊN` và `MÃ SỐ` trước khi public repository.
 
-**Insight Copilot** bi?n m?t ghi ch?/v?n b?n th? th?nh: t?m t?t, quy?t ??nh quan tr?ng, r?i ro v? h?nh ??ng ti?p theo. M?c ti?u l? gi?p nh?m s?n ph?m r?t insight t? meeting note nhanh, c? c?u tr?c v? d? ki?m tra.
+---
 
-- **Ng??i d?ng:** Product manager, founder, nghi?n c?u vi?n.
-- **??u v?o:** V?n b?n UTF-8 d?i 20?8.000 k? t?, c?u h?i t?y ch?n.
-- **??u ra:** T?m t?t, action items, risks, ngu?n ch?ng c? tr?ch t? input v? confidence.
-- **Kh?ng d?ng cho:** t? v?n ph?p l?/y t?/t?i ch?nh; kh?ng coi output l? s? th?t n?u ch?a ki?m tra ngu?n.
+# 2. Bài toán & giải pháp
 
-Xem ti?u ch? th?nh c?ng, l?t c?t MVP v? b?ng ch?ng t?i [`spec.md`](spec.md).
+## Insight Copilot
 
-## 3. Ch?y prototype
+Insight Copilot giúp chuyển đổi các ghi chú cuộc họp hoặc văn bản dài thành những thông tin quan trọng và dễ hành động.
 
-### ?i?u ki?n
+### Đầu vào
+
+- Văn bản UTF-8 từ **20 – 8.000 ký tự**
+- Có thể kèm theo một câu hỏi tùy chọn
+
+### Đầu ra
+
+Hệ thống sẽ trả về:
+
+- 📝 Summary (Tóm tắt)
+- ✅ Action Items (Việc cần làm)
+- ⚠️ Risks (Rủi ro)
+- 📌 Decisions (Quyết định quan trọng)
+- 🔍 Evidence (Đoạn trích từ văn bản gốc)
+- 📊 Confidence Score
+
+### Đối tượng sử dụng
+
+- Product Manager
+- Founder
+- Business Analyst
+- Researcher
+
+### Không sử dụng cho
+
+- Tư vấn pháp lý
+- Tư vấn y tế
+- Tư vấn tài chính
+
+> Output của AI chỉ mang tính hỗ trợ và luôn cần được kiểm chứng lại bằng dữ liệu gốc.
+
+Thông tin chi tiết về tiêu chí đánh giá MVP được mô tả trong **spec.md**.
+
+---
+
+# 3. Chạy Prototype
+
+## Yêu cầu
+
 - Python 3.11+
-- API key OpenAI (?? ch?ng minh AI th?t)
+- OpenAI API Key
+
+## Cài đặt
 
 ```powershell
 cd codebase
+
 python -m venv .venv
+
 .\.venv\Scripts\Activate.ps1
+
 pip install -r requirements.txt
+
 Copy-Item ..\.env.example .env
-# M? .env, ?i?n OPENAI_API_KEY v? ??t AI_PROVIDER=openai
+```
+
+Mở file `.env`
+
+```env
+OPENAI_API_KEY=your_api_key
+AI_PROVIDER=openai
+```
+
+Khởi chạy server
+
+```powershell
 uvicorn app.main:app --reload --port 8000
 ```
 
-M? `http://127.0.0.1:8000` v? d?n ghi ch? v?o giao di?n.
+Truy cập
 
-### L?i g?i AI th?t
+```
+http://127.0.0.1:8000
+```
 
-Khi `AI_PROVIDER=openai`, `POST /api/analyze` g?i n?i dung ng??i d?ng t?i OpenAI Responses API. Th?ng tin hi?n th? r? trong UI qua badge **OpenAI ? live**. Kh?ng commit `.env` hay API key.
+Sau đó dán nội dung cuộc họp hoặc ghi chú vào giao diện để phân tích.
 
-Khi ch?a c? key, ??t `AI_PROVIDER=mock` ?? ki?m tra lu?ng UI v? evaluation offline. ??y l? **mock**, kh?ng ???c tr?nh b?y l? AI ch?y th?t.
+---
 
-## 4. API nhanh
+# 4. Gọi AI thật
+
+Khi cấu hình
+
+```env
+AI_PROVIDER=openai
+```
+
+API
+
+```
+POST /api/analyze
+```
+
+sẽ gửi dữ liệu người dùng đến **OpenAI Responses API** để thực hiện phân tích.
+
+Trên giao diện sẽ hiển thị badge
+
+```
+OpenAI • Live
+```
+
+để xác nhận đang sử dụng AI thật.
+
+> Không commit file `.env` hoặc API Key lên GitHub.
+
+---
+
+## Chế độ Mock
+
+Nếu chưa có API Key, có thể sử dụng
+
+```env
+AI_PROVIDER=mock
+```
+
+Chế độ này chỉ trả về dữ liệu giả lập nhằm kiểm thử giao diện và luồng xử lý.
+
+**Không được trình bày đây là AI thật trong buổi demo.**
+
+---
+
+# 5. API
+
+## Request
+
+```http
+POST /api/analyze
+```
 
 ```json
-POST /api/analyze
 {
-  "text": "Nh?m th?ng nh?t ra m?t beta ng?y 15/8...",
-  "question": "Vi?c n?o c?n ?u ti?n?"
+  "text": "Nhóm thống nhất phát hành phiên bản Beta vào ngày 15/08...",
+  "question": "Việc nào cần ưu tiên?"
 }
 ```
 
-Response lu?n theo schema `summary`, `decisions`, `action_items`, `risks`, `evidence`, `confidence`, `provider`.
+## Response
 
-## 5. Ki?m th? & b?ng ch?ng
+```json
+{
+  "summary": "...",
+  "decisions": [],
+  "action_items": [],
+  "risks": [],
+  "evidence": [],
+  "confidence": 0.92,
+  "provider": "openai"
+}
+```
+
+---
+
+# 6. Kiểm thử & đánh giá
+
+Chạy toàn bộ test
 
 ```powershell
 cd codebase
+
 python -m pytest
+
 python scripts/run_eval.py
 ```
 
-- Golden set v? rubric: [`eval/`](eval/)
-- K?t qu? l?n ch?y: [`eval/results/`](eval/results/)
-- Feedback user test: [`validation/feedback-log.md`](validation/feedback-log.md)
-- Reflection t?ng th?nh vi?n: [`reflection/`](reflection/)
+Các thư mục liên quan
 
-## 6. C?u tr?c
+```
+eval/
+```
+
+- Golden Dataset
+- Rubric đánh giá
+- Kết quả Evaluation
+
+```
+validation/
+```
+
+- Feedback từ User Testing
+
+```
+reflection/
+```
+
+- Báo cáo Reflection của từng thành viên
+
+---
+
+# 7. Cấu trúc dự án
 
 ```text
 .
-??? README.md
-??? spec.md
-??? demo-slides.pdf             # deck 6 trang xu?t b?n ?? n?p
-??? demo-slides.md              # m? ngu?n n?i dung deck ?? ch?nh s?a
-??? codebase/                   # prototype FastAPI
-??? eval/                       # golden set + k?t qu? evaluation
-??? validation/                 # log ki?m ch?ng v?i ng??i d?ng
-??? reflection/                 # ph?n t? c? nh?n
+├── README.md
+├── spec.md
+├── demo-slides.md
+├── demo-slides.pdf
+├── codebase/
+├── eval/
+├── validation/
+└── reflection/
 ```
 
-## 7. Checklist tr??c demo
+Trong đó:
 
-- [ ] Thay th?ng tin th?nh vi?n v? ph?n c?ng.
-- [ ] C?u h?nh `AI_PROVIDER=openai`, ch?y m?t input th?t tr?n m?y demo.
-- [ ] Quay/l?u ?nh m?n h?nh response c? badge **OpenAI ? live**.
-- [ ] Ch?y golden set, l?u k?t qu? c? ng?y gi? v?o `eval/results/`.
-- [ ] Th?c hi?n ?t nh?t 3 user tests v? ?i?n `validation/feedback-log.md`.
-- [ ] C?p nh?t `demo-slides.md`, xu?t l?i `demo-slides.pdf`.
+- **codebase/**: Prototype FastAPI
+- **eval/**: Bộ dữ liệu đánh giá và kết quả
+- **validation/**: Nhật ký User Testing
+- **reflection/**: Báo cáo Reflection của các thành viên
+
+---
+
+# 8. Checklist trước khi Demo
+
+- [ ] Cập nhật thông tin thành viên và phân công.
+- [ ] Cấu hình `AI_PROVIDER=openai`.
+- [ ] Chạy thử ít nhất một input thật trên máy demo.
+- [ ] Chụp màn hình kết quả có badge **OpenAI • Live**.
+- [ ] Chạy bộ Golden Set và lưu kết quả vào `eval/results/`.
+- [ ] Thực hiện tối thiểu 3 User Tests và cập nhật `validation/feedback-log.md`.
+- [ ] Hoàn thiện `demo-slides.md` và xuất lại `demo-slides.pdf`.
+
+---
+
+# 9. Lưu ý
+
+- Không commit API Key.
+- Không commit file `.env`.
+- Chỉ sử dụng chế độ `mock` khi cần demo giao diện hoặc kiểm thử offline.
+- Luôn sử dụng chế độ `openai` trong buổi demo chính thức để chứng minh hệ thống có lời gọi AI thật.
+````
