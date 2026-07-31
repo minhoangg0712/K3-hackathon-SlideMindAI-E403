@@ -23,7 +23,7 @@
 | 3 | `demo-slides.pdf` — 6 trang | Lâm | 🔄 Cần xuất lại từ deck đã đồng bộ |
 | 4 | `codebase/` — prototype, ghi rõ phần nào là mock | Hoàng, Huy | 🔄 |
 | 5 | `eval/` — golden set và kết quả các lượt chạy | Hoàng, Huy | ✅ 24 câu, 23/24 đạt |
-| 6 | `validation/` — feedback log vòng user test | Hiệu | ⬜ |
+| 6 | `validation/` — feedback log vòng user test | Hiệu | ✅ |
 | 7 | `reflection/` — mỗi thành viên một file | Cả nhóm | ⬜ chốt ngày mai |
 
 > Trừ `codebase/` và slide, mọi tài liệu đều ở định dạng Markdown.
