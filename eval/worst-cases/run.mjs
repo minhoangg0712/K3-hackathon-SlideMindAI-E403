@@ -168,10 +168,13 @@ const probes = {
     for (const question of questions) {
       const r = await ask(question, { thread: "w2" });
       const total = r.snapshot?.citations?.length ?? 0;
-      const max = counts.get(DAY03) ?? Infinity;
-      const bad = (r.snapshot?.citations ?? []).filter(
-        (c) => !c.document_title || !c.quote?.trim() || !(c.page >= 1 && c.page <= max),
-      );
+      // Số trang phải đối chiếu với ĐÚNG tài liệu chứa trích dẫn: câu trả lời
+      // có thể lấy nội dung từ buổi học khác, mà mỗi tài liệu dày ngắn khác
+      // nhau. So tất cả với số trang của tài liệu đang mở là chấm sai.
+      const bad = (r.snapshot?.citations ?? []).filter((c) => {
+        const max = counts.get(c.material_id ?? DAY03) ?? Infinity;
+        return !c.document_title || !c.quote?.trim() || !(c.page >= 1 && c.page <= max);
+      });
       rows.push({ question, total, invalid: bad.length, sample: r.snapshot?.citations?.[0] ?? null });
     }
     const total = rows.reduce((sum, row) => sum + row.total, 0);
@@ -179,7 +182,7 @@ const probes = {
 
     return {
       pass: total > 0 && invalid === 0,
-      metric: `${total - invalid}/${total} citation có đủ tên tài liệu, trích dẫn khác rỗng và trang nằm trong 1..${counts.get(DAY03)}`,
+      metric: `${total - invalid}/${total} citation có đủ tên tài liệu, trích dẫn khác rỗng, và số trang nằm trong khoảng hợp lệ của chính tài liệu đó`,
       detail: rows,
     };
   },

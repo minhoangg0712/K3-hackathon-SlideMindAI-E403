@@ -96,6 +96,12 @@ export interface Citation {
   page: number;
   section: string | null;
   quote: string;
+  /**
+   * Tài liệu chứa trích dẫn. Cần khi câu trả lời lấy nội dung từ buổi học khác
+   * trong cùng khoá — không có nó thì số trang không đối chiếu được với đúng
+   * tài liệu nào. Optional để không phá dữ liệu cũ.
+   */
+  material_id?: string;
 }
 
 /**

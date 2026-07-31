@@ -26,6 +26,8 @@ const arg = (name, fallback) => {
 };
 const BASE = arg("base", "http://localhost:3000");
 const ONLY = arg("only", "").split(",").filter(Boolean);
+/** Nghỉ giữa hai câu, tránh dính giới hạn theo phút của free tier. */
+const DELAY_MS = Number(arg("delay", "6000"));
 
 const cases = (await readFile(path.join(HERE, "golden_set.jsonl"), "utf8"))
   .split("\n")
@@ -114,7 +116,24 @@ function inferStatus(answer) {
 
   // "chưa được điền", "để trống", "placeholder" đều là cách nói slide không có
   // thông tin đó — tính not_found thay vì bắt đúng chữ "không đề cập".
-  if (/(không|chưa) (đề cập|có|nêu|nói|tìm thấy|ghi)|không có trong|chưa (được )?điền|để trống|placeholder/.test(opening)) return "not_found";
+  // NHƯNG "slide chưa nói tới, mình bổ sung kiến thức nền:" mở đầu y hệt một
+  // lời từ chối rồi lại trả lời đầy đủ phía sau — đó là answered, không phải
+  // not_found. Phân biệt bằng việc có tự khai dùng kiến thức ngoài slide và
+  // câu trả lời có dài ra hay không.
+  const usesBackground =
+    /bổ sung|kiến thức nền|ngoài slide|ngoài tài liệu/.test(text.slice(0, 400)) &&
+    answer.length > 220;
+  // Phải nhắc tới slide/tài liệu thì mới tính là "slide không có thông tin".
+  // Bắt trần "không có" là chấm sai câu trả lời đúng: hỏi "khi nào KHÔNG nên
+  // dùng agent" thì câu trả lời chuẩn cũng chứa "không có tool nào để gọi".
+  const notFound =
+    /(slide|tài liệu|bài giảng|trang \d+|nội dung)[^.!?\n]{0,60}(không|chưa) (hề |nào )?(đề cập|có|nêu|nói|ghi|nhắc|trình bày|cung cấp)/.test(
+      opening,
+    ) ||
+    /(không|chưa) (hề )?(đề cập|tìm thấy|được nêu|được ghi|được trình bày)/.test(opening) ||
+    /chưa (được )?điền|để trống|placeholder/.test(opening);
+
+  if (!usesBackground && notFound) return "not_found";
 
   // Hỏi lại: câu ngắn, kết thúc bằng dấu hỏi, và không kèm cả một bài giảng.
   // Bỏ dòng [nguồn] ở cuối trước khi xét — model hay đính kèm nó ngay cả khi
@@ -153,7 +172,13 @@ const rows = [];
 
 console.log(`Chạy ${cases.length} câu qua ${BASE}\n`);
 
+let first = true;
 for (const item of cases) {
+  // Free tier siết theo phút. Bắn 24 request liên tiếp là dính 429 giữa chừng
+  // và lượt chạy hỏng, phải chạy lại từ đầu — thà chậm còn hơn mất cả lượt.
+  if (!first) await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
+  first = false;
+
   const { answer, snapshot, error, ms } = await ask(item);
   const result = error
     ? { pass: false, reasons: [`lỗi: ${error}`], actual: "error" }

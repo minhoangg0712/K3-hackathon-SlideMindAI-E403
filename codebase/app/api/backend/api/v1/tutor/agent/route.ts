@@ -63,16 +63,30 @@ Nguyên tắc:
 - Trả lời bằng tiếng Việt, giọng thân thiện, gọn và đi thẳng vào vấn đề.
 - Ưu tiên tuyệt đối nội dung slide được cung cấp trong <slide_context>. Khi trích, dùng đúng chữ trong slide.
 - Slide chỉ là điểm neo, không phải giới hạn: nếu slide nêu một khái niệm nhưng không giải thích đủ, hãy bổ sung kiến thức nền chuẩn xác và nói rõ phần nào là kiến thức bổ sung ngoài slide.
-- Chỉ nói "tài liệu không đề cập" khi câu hỏi thực sự nằm ngoài phạm vi môn học, chứ không phải khi slide chỉ thiếu chi tiết.
+- Chỉ nói "tài liệu không đề cập" khi câu hỏi thực sự nằm ngoài phạm vi môn học, chứ không phải khi slide chỉ thiếu chi tiết. Xem mục PHÂN BIỆT HAI LOẠI CÂU HỎI bên dưới.
 - Nếu có khối <slide_khac_trong_khoa>, đó là nội dung lấy từ buổi học KHÁC của cùng khóa. Được phép dùng để trả lời, nhưng phải nói rõ nó nằm ở tài liệu nào — ví dụ "phần này nằm ở day03, trang 22". TUYỆT ĐỐI không nói "tài liệu không đề cập" khi khối này có câu trả lời.
 - Khi giải thích quy trình hoặc công thức, trình bày theo từng bước có số thứ tự.
 - Nếu người học bôi đen một đoạn, coi đó là trọng tâm câu hỏi.
 - Không bịa số liệu, tên riêng hay trích dẫn không có trong slide.
 
-Khi thông tin người học hỏi KHÔNG có trong <slide_context> và cũng không phải kiến thức
-nền chắc chắn, hãy nói thẳng là slide không đề cập. Thà nói không biết còn hơn bịa.
-Đặc biệt với tên người, số liệu, ngày tháng: nếu slide chỉ ghi placeholder hoặc bỏ trống,
-phải nói rõ slide không có thông tin đó — tuyệt đối không suy đoán.
+PHÂN BIỆT HAI LOẠI CÂU HỎI (quan trọng — đừng từ chối nhầm):
+
+(a) Hỏi về SỰ KIỆN CỤ THỂ của khóa học hoặc của slide: tên giảng viên, con số,
+    ngày tháng, chi phí, "slide này nói gì về X", "trong tài liệu này X được
+    trình bày thế nào". Không có trong slide thì nói thẳng là slide không đề
+    cập. Tuyệt đối không suy đoán, không đưa con số ước lượng. Slide ghi
+    placeholder hoặc để trống cũng tính là không có.
+
+(b) Hỏi để HIỂU MỘT KHÁI NIỆM: "X là gì", "vì sao X", "X khác Y chỗ nào",
+    "cho ví dụ về X", "X dùng khi nào". Đây là câu hỏi học thuật. Nếu X là
+    kiến thức nền của môn học thì PHẢI trả lời bằng kiến thức chuẩn xác của
+    bạn, kể cả khi slide không hề nhắc tới X. Chỉ cần mở đầu bằng một câu ngắn
+    kiểu "Phần này slide chưa nói tới, mình bổ sung kiến thức nền:" rồi trả lời
+    bình thường.
+
+Trả lời "slide không đề cập" rồi dừng lại ở loại (b) là SAI. Người học đang cần
+hiểu bài, không cần biết slide có bao nhiêu chữ. Chỉ từ chối khi câu hỏi nằm
+hẳn ngoài phạm vi môn học (ví dụ hỏi công thức nấu ăn, hỏi tin tức thời sự).
 
 Liêm chính học thuật: KHÔNG giải hộ bài kiểm tra, bài tập tính điểm, không đưa đáp án
 trắc nghiệm, không viết hộ bài nộp. Gặp yêu cầu đó thì từ chối ngắn gọn và đề nghị
@@ -119,11 +133,26 @@ function closeQuietly(controller: ReadableStreamDefaultController<Uint8Array>) {
 }
 
 /**
- * Câu trả lời tự nhận là không tìm thấy thông tin. Nhận diện ở 220 ký tự đầu
- * vì một lời từ chối tốt thường kèm luôn phần giải thích hợp lệ ngay sau đó.
+ * Câu trả lời tự nhận là slide không có thông tin. Xét ở 220 ký tự đầu vì một
+ * lời từ chối tốt thường kèm luôn phần giải thích hợp lệ ngay sau đó.
+ *
+ * Phải nhắc tới slide/tài liệu thì mới tính. Bắt trần "không có" sẽ hạ điểm
+ * nhầm những câu trả lời đúng mà nội dung vốn mang nghĩa phủ định — ví dụ
+ * "khi nào KHÔNG nên dùng agent: khi không có tool nào để gọi".
  */
 const SAYS_NOT_FOUND =
-  /(không|chưa) (đề cập|có|nêu|nói|tìm thấy|ghi)|không có trong|không tìm được|nằm ngoài phạm vi/i;
+  /(slide|tài liệu|bài giảng|trang \d+|nội dung)[^.!?\n]{0,60}(không|chưa) (hề |nào )?(đề cập|có|nêu|nói|ghi|nhắc|trình bày|cung cấp)|(không|chưa) (hề )?(đề cập|tìm thấy|được nêu|được ghi)|nằm ngoài phạm vi/i;
+
+/**
+ * Câu trả lời tự khai là đang dùng kiến thức ngoài slide.
+ *
+ * Khác hẳn với từ chối: "slide chưa nói tới, mình bổ sung kiến thức nền:" mở
+ * đầu giống hệt một lời từ chối nhưng phía sau là câu trả lời đầy đủ. Không
+ * tách hai trường hợp này thì trợ lý bị chấm điểm tin cậy 0.1 cho đúng cái
+ * việc nó nên làm — giải thích khái niệm nền mà slide bỏ qua.
+ */
+const SAYS_BACKGROUND =
+  /(bổ sung|kiến thức nền|ngoài slide|ngoài tài liệu|chưa nói tới, mình|slide chưa (nói|đề cập).{0,40}(mình|tôi|nhưng))/i;
 
 /**
  * Confidence hợp thành từ ba tín hiệu, NHÂN chứ không cộng.
@@ -145,15 +174,20 @@ function confidenceFrom(hits: SlideHit[], answer: string): number {
   const best = strong[0]?.score ?? 0;
   const retrieval = Math.min(1, best / 5) * 0.75 + Math.min(1, strong.length / 3) * 0.25;
 
+  // Trả lời bằng kiến thức nền vì slide không có: không phải từ chối, nhưng
+  // cũng không có nguồn trong tài liệu để đối chiếu — chặn trần ở 0.72.
+  const background = SAYS_BACKGROUND.test(answer.slice(0, 400)) && answer.length > 220;
+
   // G — câu trả lời có bám vào nguồn không. Tự nhận không tìm thấy thì tín
   // hiệu này phải sụp, đó chính là chỗ bản trước xếp hạng ngược.
-  const grounded = SAYS_NOT_FOUND.test(answer.slice(0, 220)) ? 0.12 : 1;
+  const grounded = background ? 0.8 : SAYS_NOT_FOUND.test(answer.slice(0, 220)) ? 0.12 : 1;
 
   // C — có trích dẫn trang cụ thể trong câu trả lời không.
   const cited = /trang\s+\d+/i.test(answer) ? 1 : 0.7;
 
   const raw = Math.pow(Math.max(retrieval, 0.05), 0.55) * grounded * cited;
-  return Math.max(0.05, Math.min(0.95, Number(raw.toFixed(2))));
+  const cap = background ? 0.72 : 0.95;
+  return Math.max(0.05, Math.min(cap, Number(raw.toFixed(2))));
 }
 
 /**
@@ -438,6 +472,7 @@ export async function POST(request: Request) {
             page: hit.page,
             section: null,
             quote: hit.quote,
+            material_id: scope?.material_id,
           }));
 
         // Đoạn lấy từ tài liệu khác cũng phải hiện thành nguồn, nếu không người
@@ -448,6 +483,7 @@ export async function POST(request: Request) {
             page: hit.page,
             section: null,
             quote: hit.quote,
+            material_id: hit.materialId,
           });
         }
 
