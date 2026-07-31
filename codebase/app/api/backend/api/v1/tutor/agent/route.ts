@@ -32,6 +32,26 @@ const MODEL_CASCADE = (process.env.GEMINI_MODEL_CASCADE ?? "gemini-2.5-flash,gem
   .filter(Boolean);
 
 /**
+ * Nhiều API key, xoay vòng khi key trước hết hạn mức.
+ *
+ * Free tier siết theo NGÀY và chỉ reset lúc nửa đêm giờ Thái Bình Dương —
+ * cạn quota lúc chuẩn bị demo thì không có cách nào chờ kịp. Mỗi key là một
+ * tài khoản Google riêng nên có hạn mức riêng.
+ *
+ *   GEMINI_API_KEY_POOL=key1,key2   (ưu tiên)
+ *   GEMINI_API_KEY=key              (một key, như cũ)
+ */
+const API_KEYS = (process.env.GEMINI_API_KEY_POOL ?? process.env.GEMINI_API_KEY ?? "")
+  .split(",")
+  .map((key) => key.trim())
+  .filter(Boolean);
+
+/** Bậc thử: mỗi model nhân với mỗi key, model rẻ trước rồi mới đổi key. */
+const ATTEMPTS = API_KEYS.flatMap((apiKey, keyIndex) =>
+  MODEL_CASCADE.map((model) => ({ apiKey, model, keyIndex })),
+).sort((a, b) => a.keyIndex - b.keyIndex);
+
+/**
  * Câu hỏi dài hơn ngưỡng này bị từ chối tường minh.
  * Bản gốc `slice(0,2e3)` âm thầm và người học không hề biết mình mất chữ.
  */
@@ -170,11 +190,10 @@ export async function POST(request: Request) {
     return Response.json({ detail: "invalid_json" }, { status: 400 });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
   // `mock` chỉ để phát triển/demo offline và LUÔN được gán nhãn trên UI —
   // không bao giờ trình bày nó như AI chạy thật.
   const provider: "gemini" | "mock" =
-    process.env.TUTOR_PROVIDER === "mock" || !apiKey ? "mock" : "gemini";
+    process.env.TUTOR_PROVIDER === "mock" || ATTEMPTS.length === 0 ? "mock" : "gemini";
 
   const scope = body.forwardedProps?.scope;
   const question = body.messages.at(-1)?.content?.trim() ?? "";
@@ -351,8 +370,6 @@ export async function POST(request: Request) {
             await new Promise((resolve) => setTimeout(resolve, 18));
           }
         } else {
-          const client = new GoogleGenAI({ apiKey });
-
           // Ngữ cảnh đi trong block riêng, câu hỏi giữ nguyên văn trong
           // <question> — không ghép chuỗi, nên không có gì đẩy đuôi câu hỏi
           // ra ngoài giới hạn như bản gốc.
@@ -363,7 +380,8 @@ export async function POST(request: Request) {
           let lastError: unknown;
           let answered = false;
 
-          for (const candidate of MODEL_CASCADE) {
+          for (const { apiKey: candidateKey, model: candidate } of ATTEMPTS) {
+            const client = new GoogleGenAI({ apiKey: candidateKey });
             try {
               const responseStream = await client.models.generateContentStream({
                 model: candidate,
@@ -382,7 +400,7 @@ export async function POST(request: Request) {
               }
 
               modelUsed = candidate;
-              degraded = candidate !== MODEL_CASCADE[0];
+              degraded = candidate !== MODEL_CASCADE[0] || candidateKey !== API_KEYS[0];
               usage = {
                 input_tokens: usageMeta?.promptTokenCount ?? 0,
                 output_tokens: usageMeta?.candidatesTokenCount ?? 0,

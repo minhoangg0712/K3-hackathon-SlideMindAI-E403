@@ -47,6 +47,9 @@ async function ask(item) {
       context: [],
       forwardedProps: {
         clientTurnKey: `eval-${item.id}`,
+        // Bộ này đo chất lượng câu trả lời của model, nên phải gọi model thật.
+        // Ăn cache thì lượt chạy chỉ đang chấm lại kết quả của lượt trước.
+        skipCache: true,
         scope: {
           course_id: "COMP2010",
           lecture_id: "eval",
@@ -114,7 +117,9 @@ function inferStatus(answer) {
   if (/(không|chưa) (đề cập|có|nêu|nói|tìm thấy|ghi)|không có trong|chưa (được )?điền|để trống|placeholder/.test(opening)) return "not_found";
 
   // Hỏi lại: câu ngắn, kết thúc bằng dấu hỏi, và không kèm cả một bài giảng.
-  const trimmed = answer.trim();
+  // Bỏ dòng [nguồn] ở cuối trước khi xét — model hay đính kèm nó ngay cả khi
+  // đang hỏi lại, và khi đó dấu hỏi không còn nằm ở ký tự cuối chuỗi nữa.
+  const trimmed = answer.replace(/\n*\[nguồn\][^\n]*$/i, "").trim();
   if (trimmed.endsWith("?") && trimmed.length < 400) return "clarify";
 
   return "answered";
