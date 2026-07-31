@@ -99,16 +99,21 @@ cd codebase
 
 npm install
 
-npm run setup          # copy asset pdfjs
+npm run setup          # copy asset pdfjs + sinh 12 PDF slide
 
 Copy-Item .env.example .env.local
 ```
+
+> `npm run setup` là **bắt buộc**, không phải bước tuỳ chọn. Worker của pdfjs và
+> file PDF nằm trong `.gitignore` nên clone về là chưa có — bỏ qua bước này thì
+> trình đọc hiện trang trắng, không render được slide nào.
 
 Mở file `.env.local`
 
 ```env
 GEMINI_API_KEY=your_api_key
 GEMINI_MODEL_CASCADE=gemini-3.5-flash,gemini-3.5-flash-lite
+NEXT_PUBLIC_TUTOR_DAILY_LIMIT=15   # đặt 0 để bỏ hạn mức khi demo
 ```
 
 Kiểm tra key và xem model nào còn khả dụng
@@ -130,6 +135,16 @@ http://localhost:3000
 ```
 
 Đường đi demo: `/dashboard` → **Khóa học của tôi** → **COMP2010** → **Đọc Slide** → đặt câu hỏi ở panel Tutor bên phải.
+
+Hết 15 lượt hỏi trong ngày:
+
+```powershell
+npm run reset-quota
+```
+
+Quota nằm ở `localStorage` đúng như bản gốc, mà localStorage thì chỉ trình duyệt
+chạm được — script chép sẵn đoạn lệnh vào clipboard, dán một lần vào Console
+(F12) là xong. Muốn khỏi phải reset thì đặt `NEXT_PUBLIC_TUTOR_DAILY_LIMIT=0`.
 
 ---
 

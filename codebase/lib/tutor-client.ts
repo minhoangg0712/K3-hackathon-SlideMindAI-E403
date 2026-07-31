@@ -232,9 +232,17 @@ export async function rateAnswer(messageId: string, rating: "up" | "down"): Prom
 /* Quota                                                              */
 /* ------------------------------------------------------------------ */
 
-export const TUTOR_DAILY_LIMIT = 15;
+/**
+ * Bản gốc chốt cứng 15 câu/ngày trong bundle. Ở đây để ngoài env vì lúc demo
+ * hoặc chạy eval mà hết lượt là tắc, trong khi quota này nằm ở localStorage
+ * nên nó chưa từng là hàng rào thật — chỉ là bộ đếm trên máy người dùng.
+ * Đặt NEXT_PUBLIC_TUTOR_DAILY_LIMIT=0 để bỏ giới hạn.
+ */
+export const TUTOR_DAILY_LIMIT =
+  Number.parseInt(process.env.NEXT_PUBLIC_TUTOR_DAILY_LIMIT ?? "15", 10) || 0;
 
-function quotaKey(email: string): string {
+/** Đúng công thức key của bản gốc, để scripts/reset-quota.mjs sinh lại được. */
+export function quotaKey(email: string): string {
   return `vlearn_quota_${email.toLowerCase()}_${new Date().toISOString().split("T")[0]}`;
 }
 

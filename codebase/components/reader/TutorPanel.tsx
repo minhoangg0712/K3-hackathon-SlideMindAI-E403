@@ -51,7 +51,8 @@ export function TutorPanel({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  const quotaReached = quota.usedCount >= quota.maxLimit;
+  // maxLimit 0 = tắt hạn mức (NEXT_PUBLIC_TUTOR_DAILY_LIMIT=0), dùng khi demo.
+  const quotaReached = quota.maxLimit > 0 && quota.usedCount >= quota.maxLimit;
 
   const send = useCallback(async () => {
     const question = input.trim();
@@ -123,7 +124,8 @@ export function TutorPanel({
     }
   }, []);
 
-  const quotaPercent = Math.min(100, (quota.usedCount / quota.maxLimit) * 100);
+  const quotaPercent =
+    quota.maxLimit > 0 ? Math.min(100, (quota.usedCount / quota.maxLimit) * 100) : 0;
 
   return (
     <aside className="flex w-[320px] shrink-0 flex-col border-l border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">

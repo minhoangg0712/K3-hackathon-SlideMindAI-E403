@@ -142,7 +142,8 @@ const vi = {
   },
   quota: {
     label: "Quota Tutor trong ngày",
-    count: (used: number, max: number) => `${used} / ${max} câu`,
+    count: (used: number, max: number) =>
+      max > 0 ? `${used} / ${max} câu` : `${used} câu · không giới hạn`,
     byokInfo: "Thông tin BYOK",
   },
   aiMessage: {
@@ -307,7 +308,8 @@ const en: Dictionary = {
   },
   quota: {
     label: "Daily Tutor quota",
-    count: (used: number, max: number) => `${used} / ${max} questions`,
+    count: (used: number, max: number) =>
+      max > 0 ? `${used} / ${max} questions` : `${used} questions · unlimited`,
     byokInfo: "BYOK info",
   },
   aiMessage: {
