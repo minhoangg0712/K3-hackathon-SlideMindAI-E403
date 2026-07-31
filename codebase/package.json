@@ -11,7 +11,8 @@
     "setup:pdfjs": "node scripts/setup-pdfjs.mjs",
     "setup:slides": "node scripts/generate-placeholder-pdfs.mjs",
     "setup": "npm run setup:pdfjs && npm run setup:slides",
-    "reset-quota": "node scripts/reset-quota.mjs"
+    "reset-quota": "node scripts/reset-quota.mjs",
+    "doctor": "node scripts/doctor.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.14.0",

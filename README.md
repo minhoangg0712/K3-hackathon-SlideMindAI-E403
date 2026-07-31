@@ -100,6 +100,7 @@ cd codebase
 npm install
 
 npm run setup          # copy asset pdfjs + sinh 12 PDF slide
+npm run doctor         # kiểm tra đã đủ điều kiện chạy chưa
 
 Copy-Item .env.example .env.local
 ```
