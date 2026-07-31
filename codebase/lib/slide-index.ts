@@ -81,6 +81,71 @@ export function loadSlideDocument(materialId: string): Promise<SlideDocument | n
   return pending;
 }
 
+/**
+ * Nạp trước chỉ mục của cả khoá, không chặn request nào.
+ *
+ * Tìm xuyên tài liệu chỉ có nghĩa khi các tài liệu khác đã đọc xong, mà mỗi
+ * PDF mất một hai giây để trích text. Gọi hàm này lúc route được nạp: đến khi
+ * người học gõ câu hỏi đầu tiên thì phần lớn tài liệu đã sẵn sàng, còn cái nào
+ * chưa xong thì lượt đó bỏ qua chứ không bắt ai phải chờ.
+ */
+export function warmCourseIndex(courseId: string): void {
+  for (const doc of DOCUMENTS) {
+    if (doc.course_id === courseId) void loadSlideDocument(doc.material_id);
+  }
+}
+
+/** Tài liệu đã nằm sẵn trong cache, không kích hoạt lần đọc PDF mới. */
+async function readyDocuments(
+  courseId: string,
+  excludeMaterialId: string,
+): Promise<SlideDocument[]> {
+  const ids = DOCUMENTS.filter(
+    (doc) => doc.course_id === courseId && doc.material_id !== excludeMaterialId,
+  ).map((doc) => doc.material_id);
+
+  const ready: SlideDocument[] = [];
+  for (const id of ids) {
+    const pending = cache.get(id);
+    if (!pending) continue;
+    // Chỉ lấy cái đã resolve — Promise.race với undefined cho biết ngay, không chờ.
+    const doc = await Promise.race([pending, Promise.resolve(undefined)]);
+    if (doc) ready.push(doc);
+  }
+  return ready;
+}
+
+export interface CourseHit extends SlideHit {
+  materialId: string;
+  fileName: string;
+}
+
+/**
+ * Tìm trong các tài liệu KHÁC của cùng khoá học.
+ *
+ * Bản gốc chỉ có một tool `search_slides` khoá trong tài liệu đang mở, nên
+ * khái niệm dạy ở Day 3 mà hỏi lại lúc đang đọc Day 5 thì bị trả lời là tài
+ * liệu không đề cập — trong khi nó nằm ngay trong khoá.
+ */
+export async function searchCourse(
+  courseId: string,
+  excludeMaterialId: string,
+  query: string,
+  limit = 3,
+): Promise<CourseHit[]> {
+  const docs = await readyDocuments(courseId, excludeMaterialId);
+
+  const hits: CourseHit[] = [];
+  for (const doc of docs) {
+    for (const hit of searchSlides(doc, query, undefined, 2)) {
+      hits.push({ ...hit, materialId: doc.materialId, fileName: doc.fileName });
+    }
+  }
+
+  hits.sort((a, b) => b.score - a.score);
+  return hits.slice(0, limit);
+}
+
 /** Bỏ dấu để so khớp không phụ thuộc cách người học gõ tiếng Việt. */
 function normalize(text: string): string {
   return text

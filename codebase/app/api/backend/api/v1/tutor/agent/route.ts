@@ -1,7 +1,18 @@
 import { GoogleGenAI } from "@google/genai";
 import { randomUUID } from "node:crypto";
 import { encodeAguiEvent, type AguiEvent, type AguiRequest } from "@/lib/agui";
-import { loadSlideDocument, searchSlides, type SlideHit } from "@/lib/slide-index";
+import {
+  loadSlideDocument,
+  searchCourse,
+  searchSlides,
+  warmCourseIndex,
+  type CourseHit,
+  type SlideHit,
+} from "@/lib/slide-index";
+
+// Nạp trước chỉ mục cả khoá ngay khi route được load, để tool search_course có
+// dữ liệu mà tìm. Không await — request đầu tiên không phải chờ.
+warmCourseIndex("COMP2010");
 
 /** Cần Node runtime để đọc PDF từ ổ đĩa. */
 export const runtime = "nodejs";
@@ -31,6 +42,7 @@ Nguyên tắc:
 - Ưu tiên tuyệt đối nội dung slide được cung cấp trong <slide_context>. Khi trích, dùng đúng chữ trong slide.
 - Slide chỉ là điểm neo, không phải giới hạn: nếu slide nêu một khái niệm nhưng không giải thích đủ, hãy bổ sung kiến thức nền chuẩn xác và nói rõ phần nào là kiến thức bổ sung ngoài slide.
 - Chỉ nói "tài liệu không đề cập" khi câu hỏi thực sự nằm ngoài phạm vi môn học, chứ không phải khi slide chỉ thiếu chi tiết.
+- Nếu có khối <slide_khac_trong_khoa>, đó là nội dung lấy từ buổi học KHÁC của cùng khóa. Được phép dùng để trả lời, nhưng phải nói rõ nó nằm ở tài liệu nào — ví dụ "phần này nằm ở day03, trang 22". TUYỆT ĐỐI không nói "tài liệu không đề cập" khi khối này có câu trả lời.
 - Khi giải thích quy trình hoặc công thức, trình bày theo từng bước có số thứ tự.
 - Nếu người học bôi đen một đoạn, coi đó là trọng tâm câu hỏi.
 - Không bịa số liệu, tên riêng hay trích dẫn không có trong slide.
@@ -84,13 +96,42 @@ function closeQuietly(controller: ReadableStreamDefaultController<Uint8Array>) {
   }
 }
 
-/** Ngưỡng nhãn confidence khớp bảng nhãn trên UI. */
+/**
+ * Câu trả lời tự nhận là không tìm thấy thông tin. Nhận diện ở 220 ký tự đầu
+ * vì một lời từ chối tốt thường kèm luôn phần giải thích hợp lệ ngay sau đó.
+ */
+const SAYS_NOT_FOUND =
+  /(không|chưa) (đề cập|có|nêu|nói|tìm thấy|ghi)|không có trong|không tìm được|nằm ngoài phạm vi/i;
+
+/**
+ * Confidence hợp thành từ ba tín hiệu, NHÂN chứ không cộng.
+ *
+ * Bản gốc để `confidence: citations.length ? .85 : .6` — hai hằng số, không
+ * liên quan gì tới việc câu trả lời có đúng hay không. Bản đầu của nhóm khá
+ * hơn nhưng vẫn cộng có trọng số, nên một câu "slide không đề cập" vẫn được
+ * 0.75 chỉ vì tìm ra vài trang khớp từ khoá lặt vặt — cao hơn cả câu trả lời
+ * có căn cứ hẳn hoi. Nhân thì một tín hiệu bằng 0 kéo cả tích về 0, nên điểm
+ * cao đòi hỏi ĐỒNG THỜI: tìm được nguồn, nguồn đủ mạnh, và có trả lời thật.
+ */
 function confidenceFrom(hits: SlideHit[], answer: string): number {
-  if (hits.length === 0) return answer.length > 0 ? 0.42 : 0.2;
-  const best = hits[0].score;
-  // Càng nhiều token khớp và càng nhiều trang chứng cứ thì càng tin cậy.
-  const coverage = Math.min(1, best / 6) * 0.6 + Math.min(1, hits.length / 3) * 0.3;
-  return Math.min(0.95, 0.45 + coverage * 0.5);
+  if (answer.length === 0) return 0.2;
+
+  // R — có tìm được nguồn không, nguồn mạnh tới đâu.
+  // score >= 2 nghĩa là khớp từ hai token nội dung trở lên, không phải trúng
+  // nhờ được cộng điểm vì nằm cạnh trang đang đọc.
+  const strong = hits.filter((hit) => hit.score >= 2);
+  const best = strong[0]?.score ?? 0;
+  const retrieval = Math.min(1, best / 5) * 0.75 + Math.min(1, strong.length / 3) * 0.25;
+
+  // G — câu trả lời có bám vào nguồn không. Tự nhận không tìm thấy thì tín
+  // hiệu này phải sụp, đó chính là chỗ bản trước xếp hạng ngược.
+  const grounded = SAYS_NOT_FOUND.test(answer.slice(0, 220)) ? 0.12 : 1;
+
+  // C — có trích dẫn trang cụ thể trong câu trả lời không.
+  const cited = /trang\s+\d+/i.test(answer) ? 1 : 0.7;
+
+  const raw = Math.pow(Math.max(retrieval, 0.05), 0.55) * grounded * cited;
+  return Math.max(0.05, Math.min(0.95, Number(raw.toFixed(2))));
 }
 
 /**
@@ -158,6 +199,10 @@ export async function POST(request: Request) {
         let hits: SlideHit[] = [];
         let slideContext = "";
         let fileName = "";
+        /** Đoạn tìm được ở tài liệu KHÁC trong cùng khoá (tool search_course). */
+        let courseHits: CourseHit[] = [];
+
+        const query = [scope?.selected_text ?? "", question].join(" ");
 
         if (scope?.material_id) {
           sse({ type: "TOOL_CALL_START", toolCallId, toolCallName: "search_slides" }, controller);
@@ -165,7 +210,6 @@ export async function POST(request: Request) {
           const doc = await loadSlideDocument(scope.material_id);
           if (doc) {
             fileName = doc.fileName;
-            const query = [scope.selected_text ?? "", question].join(" ");
             hits = searchSlides(doc, query, scope.page_number);
 
             // Luôn kèm trang đang mở, kể cả khi không khớp từ khóa nào.
@@ -193,6 +237,48 @@ export async function POST(request: Request) {
             controller,
           );
           sse({ type: "TOOL_CALL_END", toolCallId }, controller);
+
+          // --- Tìm sang tài liệu khác cùng khoá (tool search_course) --------
+          if (scope.course_id) {
+            const courseCallId = `tc_${randomUUID()}`;
+            sse(
+              { type: "TOOL_CALL_START", toolCallId: courseCallId, toolCallName: "search_course" },
+              controller,
+            );
+
+            // Giữ đoạn ở tài liệu khác khi nó khớp thật sự (từ hai token nội
+            // dung trở lên). Không so với bestLocal: cách chấm hiện tại đếm
+            // token có/không nên "react" và "bước" nặng ngang nhau, tài liệu
+            // đang mở dễ ăn điểm nhờ mấy từ chung mà chẳng nói gì về khái niệm.
+            courseHits = (await searchCourse(scope.course_id, scope.material_id, query)).filter(
+              (hit) => hit.score >= 2,
+            );
+
+            sse(
+              {
+                type: "TOOL_CALL_RESULT",
+                toolCallId: courseCallId,
+                content:
+                  courseHits
+                    .map((hit) => `[${hit.fileName} trang ${hit.page}] ${hit.quote}`)
+                    .join("\n") || "Không tài liệu nào khác trong khoá nhắc tới nội dung này.",
+              },
+              controller,
+            );
+            sse({ type: "TOOL_CALL_END", toolCallId: courseCallId }, controller);
+
+            if (courseHits.length > 0) {
+              const block = courseHits
+                .map((hit) => `[${hit.fileName} · trang ${hit.page}] ${hit.quote}`)
+                .join("\n\n");
+              slideContext = [
+                slideContext,
+                `<slide_khac_trong_khoa>\n${block}\n</slide_khac_trong_khoa>`,
+              ]
+                .filter(Boolean)
+                .join("\n\n");
+            }
+          }
         }
 
         // --- Gọi Gemini ----------------------------------------------------
