@@ -10,6 +10,7 @@
 import { mkdirSync, existsSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { encodeText, findVietnameseFont, toUnicodeCMap, widthArray } from "./lib/ttf.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT_DIR = join(ROOT, "public", "materials");
@@ -31,19 +32,69 @@ const MATERIALS = [
 ];
 
 /**
- * Nội dung 3 slide đầu của day01_302.pdf, lấy từ text layer của bản gốc.
- * Có nội dung thật giúp phần RAG của Tutor demo thuyết phục hơn placeholder.
+ * Nội dung slide của day01_302.pdf.
+ *
+ * Trang 1-3 lấy nguyên văn từ text layer bản gốc. Trang 4-14 là nội dung MÔ
+ * PHỎNG do nhóm viết, bám đúng agenda ở trang 3 — cần chúng vì corpus chỉ có
+ * ba trang thật thì không đủ để thử retrieval: mọi câu hỏi đều rơi vào "slide
+ * không đề cập", và bộ test không phân biệt được sản phẩm tốt với sản phẩm im
+ * lặng. Trang mô phỏng có nhãn riêng ở chân trang, xem MOCK_PAGES_FROM.
  */
 const KNOWN_CONTENT = {
   material_ms2039d0_hnxpxy: {
     1: ["AI IN ACTION", "Day 1", "AI & LLM Foundation", "Ban dang dung AI moi ngay -", "nhung thuc su ben trong no dang lam gi?", "Instructor: Mai Anh Nguyen"],
     2: ["Mai Anh Nguyen", "Generalist Product Builder", "2026 FPT Long Chau (PM - Healthcare Product)", "2025 Thongtincuuho.org (Co-founder)", "2025 FPT Software AI Center (PM - AI Agent)", "2021-2025 Xantus (PM - On-chain Analytics, AI Agent)", "2016-2021 DYNO, Kalapa (PM - OCR, eKYC, Credit Scoring)"],
     3: ["Day 1 - Agenda", "- Buc tranh AI & cac tang cua AI", "- Lich su AI 70 nam", "- Ben trong LLM: co che van hanh", "- Tu LLM den AI Agent", "- Landscape: model hom nay & cuoc dua hien tai", "- Chon model & chi phi token", "- Goi API lan dau", "- Tong ket - nhung y de mang ve"],
+    4: ["Các tầng của AI", "AI là tập lớn nhất: mọi hệ thống bắt chước hành vi thông minh", "Machine Learning: học quy luật từ dữ liệu thay vì viết luật bằng tay", "Deep Learning: mạng nơ-ron nhiều lớp, tự rút ra đặc trưng", "Generative AI: sinh ra nội dung mới thay vì chỉ phân loại", "LLM là một nhánh của Generative AI, chuyên về ngôn ngữ"],
+    5: ["Lịch sử AI 70 năm", "1956 Hội thảo Dartmouth - khai sinh thuật ngữ Artificial Intelligence", "1974-1980 Mùa đông AI lần một: kỳ vọng vượt xa năng lực tính toán", "1997 Deep Blue thắng Kasparov - AI thắng người ở cờ vua", "2012 AlexNet - deep learning bùng nổ nhờ GPU", "2017 Kiến trúc Transformer ra đời", "2022 ChatGPT đưa LLM đến với người dùng phổ thông"],
+    6: ["Bên trong LLM: token", "Model không đọc chữ, nó đọc token", "Token là mảnh văn bản: một từ ngắn thường là một token", "Tiếng Việt có dấu tốn nhiều token hơn tiếng Anh cùng ý nghĩa", "Trung bình 1 token xấp xỉ 4 ký tự tiếng Anh", "Mọi chi phí gọi API đều tính theo số token vào và ra"],
+    7: ["Bên trong LLM: dự đoán token tiếp theo", "LLM không tra cứu cơ sở dữ liệu, nó dự đoán token kế tiếp", "Mỗi bước sinh ra một phân phối xác suất trên toàn bộ từ vựng", "Temperature điều chỉnh độ ngẫu nhiên khi chọn token", "Temperature 0 cho kết quả ổn định, thích hợp khi cần lặp lại được", "Đây là lý do model có thể nói sai mà vẫn rất tự tin"],
+    8: ["Kiến trúc Transformer", "Attention cho phép model nhìn toàn bộ câu cùng lúc", "Self-attention: mỗi token đánh trọng số cho mọi token khác", "Multi-head attention: nhiều góc nhìn song song trên cùng chuỗi", "Positional encoding bù lại việc attention không có thứ tự", "Bài báo gốc: Attention Is All You Need, 2017"],
+    9: ["Context window", "Context window là số token tối đa model đọc được trong một lượt", "Vượt quá giới hạn thì phần đầu bị cắt, model quên mất đầu bài", "Cắt âm thầm là lỗi thiết kế: người dùng không biết mình mất chữ", "Cửa sổ lớn không miễn phí: chi phí và độ trễ tăng theo độ dài", "Nên chọn lọc ngữ cảnh thay vì nhồi tất cả vào prompt"],
+    10: ["Hallucination - vì sao model bịa", "Model tối ưu cho tính hợp lý của câu, không phải tính đúng của sự thật", "Khi thiếu dữ liệu, nó vẫn sinh ra câu nghe rất trơn tru", "Càng hỏi về chi tiết hẹp, nguy cơ bịa càng cao", "Cách giảm: cung cấp nguồn thật và bắt model trích dẫn nguồn", "Cách đo: kiểm tra từng trích dẫn có thật nằm trong tài liệu không"],
+    11: ["Từ LLM đến AI Agent", "LLM thuần tuý: một câu hỏi, một câu trả lời, không hành động", "Agent: có mục tiêu, có công cụ, có vòng lặp quan sát và điều chỉnh", "Ba thành phần: bộ não là LLM, công cụ là API, bộ nhớ là trạng thái", "Agent tự quyết định gọi công cụ nào và gọi mấy lần", "Đánh đổi: mạnh hơn nhưng chậm hơn và khó dự đoán hơn"],
+    12: ["Landscape model hôm nay", "Ba nhóm chính: closed-source API, open-weight, và model chạy trên máy", "Closed-source mạnh nhất nhưng phụ thuộc nhà cung cấp và giá", "Open-weight cho phép tự host, kiểm soát dữ liệu, chi phí cố định", "Model nhỏ chạy được trên laptop, đủ cho tác vụ đơn giản", "Chọn theo bài toán chứ không chọn theo bảng xếp hạng"],
+    13: ["Chọn model và chi phí token", "Giá tính riêng cho token vào và token ra, token ra thường đắt hơn", "Model mạnh nhất không phải lựa chọn đúng cho mọi bước", "Chiến lược cascade: model rẻ trước, chỉ leo lên bậc cao khi cần", "Cache lại câu trả lời cho câu hỏi lặp lại để khỏi trả tiền hai lần", "Free tier siết theo phút và theo ngày, phải thiết kế để không vỡ"],
+    14: ["Tổng kết Day 1", "LLM dự đoán token, không tra cứu sự thật", "Context window hữu hạn - phải chọn lọc ngữ cảnh", "Hallucination là đặc tính, không phải lỗi ngẫu nhiên", "Agent = LLM + công cụ + vòng lặp", "Chi phí và quota là ràng buộc thiết kế, không phải chi tiết kỹ thuật"],
   },
+};
+
+/**
+ * Từ trang này trở đi trong mỗi tài liệu là nội dung mô phỏng, không phải chữ
+ * lấy từ slide gốc. Chân trang ghi rõ để không ai nhầm khi demo.
+ */
+const MOCK_PAGES_FROM = {
+  material_ms2039d0_hnxpxy: 4,
 };
 
 const PAGE_WIDTH = 960;
 const PAGE_HEIGHT = 540;
+
+/**
+ * Font nhúng có đủ glyph tiếng Việt, tìm trong font hệ thống. Không có thì
+ * quay về Helvetica và bỏ dấu — slide vẫn đọc được, chỉ mất dấu.
+ */
+const FONT = findVietnameseFont();
+
+/** Glyph thực sự dùng, để mảng W của CIDFont không phải liệt kê cả 5000 glyph. */
+const usedGlyphs = new Set();
+
+/**
+ * Một đoạn text trong content stream.
+ *
+ * Có font nhúng thì viết hex glyph id (Identity-H) và giữ nguyên dấu; không thì
+ * viết chuỗi WinAnsi đã bỏ dấu như trước.
+ */
+function drawText(text, { size, color, x, y }) {
+  if (FONT) {
+    for (const ch of text) {
+      const glyph = FONT.cmap.get(ch.codePointAt(0));
+      if (glyph !== undefined) usedGlyphs.add(glyph);
+    }
+    return `BT /F1 ${size} Tf ${color} rg ${x} ${y} Td <${encodeText(FONT, text)}> Tj ET`;
+  }
+  return `BT /F1 ${size} Tf ${color} rg ${x} ${y} Td (${escapePdfText(text)}) Tj ET`;
+}
 
 /** PDF base font Helvetica chỉ có WinAnsi, nên bỏ dấu tiếng Việt. */
 function toAscii(text) {
@@ -66,41 +117,63 @@ function contentStream(material, pageNumber) {
   lines.push("q 0.07 0.31 0.55 rg 0 " + (PAGE_HEIGHT - 14) + " " + PAGE_WIDTH + " 14 re f Q");
   lines.push("q 0.78 0.13 0.15 rg " + (PAGE_WIDTH - 120) + " " + (PAGE_HEIGHT - 14) + " 120 14 re f Q");
 
-  lines.push("BT /F1 11 Tf 0.45 0.5 0.55 rg 48 " + (PAGE_HEIGHT - 46) + " Td");
-  lines.push("(" + escapePdfText(`${material.day} - ${material.name}`) + ") Tj ET");
+  lines.push(
+    drawText(`${material.day} - ${material.name}`, {
+      size: 11,
+      color: "0.45 0.5 0.55",
+      x: 48,
+      y: PAGE_HEIGHT - 46,
+    }),
+  );
 
   if (known) {
     let y = PAGE_HEIGHT - 120;
     known.forEach((line, index) => {
       const size = index === 0 ? 26 : index < 3 ? 20 : 14;
       const color = index < 3 ? "0.07 0.31 0.55" : "0.15 0.18 0.22";
-      lines.push(`BT /F1 ${size} Tf ${color} rg 48 ${y} Td (${escapePdfText(line)}) Tj ET`);
+      lines.push(drawText(line, { size, color, x: 48, y }));
       y -= size + 16;
     });
   } else {
     lines.push(
-      "BT /F1 30 Tf 0.07 0.31 0.55 rg 48 " +
-        (PAGE_HEIGHT - 140) +
-        " Td (" +
-        escapePdfText(`${material.day} - Slide ${pageNumber}`) +
-        ") Tj ET",
+      drawText(`${material.day} - Slide ${pageNumber}`, {
+        size: 30,
+        color: "0.07 0.31 0.55",
+        x: 48,
+        y: PAGE_HEIGHT - 140,
+      }),
     );
     lines.push(
-      "BT /F1 14 Tf 0.45 0.5 0.55 rg 48 " +
-        (PAGE_HEIGHT - 190) +
-        " Td (Placeholder slide. Thay bang slide that tai public/materials/" +
-        escapePdfText(material.id) +
-        ".pdf) Tj ET",
+      drawText(`Slide mô phỏng. Thay bằng slide thật tại public/materials/${material.id}.pdf`, {
+        size: 14,
+        color: "0.45 0.5 0.55",
+        x: 48,
+        y: PAGE_HEIGHT - 190,
+      }),
     );
   }
 
   lines.push(
-    "BT /F1 10 Tf 0.6 0.64 0.69 rg " +
-      (PAGE_WIDTH - 120) +
-      " 32 Td (" +
-      escapePdfText(`Trang ${pageNumber} / ${material.pages}`) +
-      ") Tj ET",
+    drawText(`Trang ${pageNumber} / ${material.pages}`, {
+      size: 10,
+      color: "0.6 0.64 0.69",
+      x: PAGE_WIDTH - 120,
+      y: 32,
+    }),
   );
+
+  // Nhãn phân biệt trang nội dung mô phỏng với trang chép từ slide gốc.
+  const mockFrom = MOCK_PAGES_FROM[material.id];
+  if (known && mockFrom && pageNumber >= mockFrom) {
+    lines.push(
+      drawText("Nội dung mô phỏng do nhóm soạn, không phải chữ trên slide gốc.", {
+        size: 9,
+        color: "0.72 0.45 0.1",
+        x: 48,
+        y: 32,
+      }),
+    );
+  }
 
   return lines.join("\n");
 }
@@ -118,16 +191,53 @@ function buildPdf(material) {
   push(null);
   const fontId = push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
 
-  const pageIds = [];
+  // Dựng nội dung trang TRƯỚC khi mô tả font: mảng W của CIDFont chỉ liệt kê
+  // glyph thật sự dùng, mà tập đó chỉ biết sau khi đã vẽ xong mọi trang.
+  const streams = [];
   for (let pageNumber = 1; pageNumber <= material.pages; pageNumber += 1) {
-    const stream = contentStream(material, pageNumber);
+    streams.push(contentStream(material, pageNumber));
+  }
+
+  // Font nhúng: chỉ tạo các object này khi máy có font đủ glyph tiếng Việt.
+  let textFontId = fontId;
+  if (FONT) {
+    const fileId = push(
+      `<< /Length ${FONT.data.length} /Length1 ${FONT.data.length} >>\nstream\n` +
+        `${FONT.data.toString("latin1")}\nendstream`,
+    );
+    const descriptorId = push(
+      `<< /Type /FontDescriptor /FontName /EmbeddedVN /Flags 32 ` +
+        `/FontBBox [-1000 -400 2000 1100] /ItalicAngle 0 /Ascent 900 /Descent -200 ` +
+        `/CapHeight 700 /StemV 80 /FontFile2 ${fileId} 0 R >>`,
+    );
+    const cidFontId = push(
+      `<< /Type /Font /Subtype /CIDFontType2 /BaseFont /EmbeddedVN ` +
+        `/CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> ` +
+        `/FontDescriptor ${descriptorId} 0 R /DW 1000 /W [${widthArray(FONT, usedGlyphs)}] ` +
+        `/CIDToGIDMap /Identity >>`,
+    );
+    // Không có ToUnicode thì PDF vẫn hiện đúng chữ nhưng lớp text bên dưới
+    // chỉ là số hiệu glyph — Tutor đọc slide bằng lớp đó nên bắt buộc phải có.
+    const cmap = toUnicodeCMap(FONT, usedGlyphs);
+    const toUnicodeId = push(
+      `<< /Length ${Buffer.byteLength(cmap, "latin1")} >>\nstream\n${cmap}\nendstream`,
+    );
+    textFontId = push(
+      `<< /Type /Font /Subtype /Type0 /BaseFont /EmbeddedVN ` +
+        `/Encoding /Identity-H /DescendantFonts [${cidFontId} 0 R] ` +
+        `/ToUnicode ${toUnicodeId} 0 R >>`,
+    );
+  }
+
+  const pageIds = [];
+  for (const stream of streams) {
     const streamId = push(
       `<< /Length ${Buffer.byteLength(stream, "latin1")} >>\nstream\n${stream}\nendstream`,
     );
     pageIds.push(
       push(
         `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_WIDTH} ${PAGE_HEIGHT}] ` +
-          `/Resources << /Font << /F1 ${fontId} 0 R >> >> /Contents ${streamId} 0 R >>`,
+          `/Resources << /Font << /F1 ${textFontId} 0 R >> >> /Contents ${streamId} 0 R >>`,
       ),
     );
   }
