@@ -12,6 +12,8 @@ export interface AguiRequest {
   forwardedProps?: {
     clientTurnKey?: string;
     conversationId?: string;
+    /** Bỏ qua cache, để demo trực tiếp nhìn thấy model chạy thật. */
+    skipCache?: boolean;
     /** Mở rộng của mình: ngữ cảnh giàu hơn thay vì nhồi vào chuỗi câu hỏi. */
     scope?: {
       course_id: string;

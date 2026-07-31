@@ -202,7 +202,9 @@ const probes = {
 
   /** W4 — hỏi lại y hệt có được cache không. */
   async repeat_question() {
-    const question = "ReAct là viết tắt của gì?";
+    // Câu hỏi phải là câu chưa ai hỏi trong lượt chạy này, nếu không lần "đầu"
+    // đã trúng cache do case khác để lại và phép đo mất ý nghĩa.
+    const question = `ReAct là viết tắt của gì? (kiểm tra ${Date.now()})`;
     const first = await ask(question, { thread: "w4a" });
     const second = await ask(question, { thread: "w4b" });
     const hasField = second.snapshot ? "cache_hit" in second.snapshot : false;

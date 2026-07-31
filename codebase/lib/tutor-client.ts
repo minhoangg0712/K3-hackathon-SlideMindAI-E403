@@ -132,6 +132,9 @@ export async function askTutor(request: TutorAskRequest, handlers: AskHandlers):
   let confidence = 0.4;
   let status: TutorFinal["status"] = "answered";
   let provider: TutorProvider = "mock";
+  let model: string | undefined;
+  let degraded = false;
+  let cacheHit = false;
 
   const payload: AguiRequest = {
     threadId: conversationId,
@@ -185,12 +188,18 @@ export async function askTutor(request: TutorAskRequest, handlers: AskHandlers):
             confidence?: number;
             status?: TutorFinal["status"];
             provider?: TutorProvider;
+            model?: string;
+            degraded?: boolean;
+            cache_hit?: boolean;
           };
           if (typeof snapshot.message_id === "string") messageIdFromState = snapshot.message_id;
           if (Array.isArray(snapshot.citations)) citations = snapshot.citations;
           if (typeof snapshot.confidence === "number") confidence = snapshot.confidence;
           if (snapshot.status) status = snapshot.status;
           if (snapshot.provider) provider = snapshot.provider;
+          if (typeof snapshot.model === "string") model = snapshot.model;
+          if (typeof snapshot.degraded === "boolean") degraded = snapshot.degraded;
+          if (typeof snapshot.cache_hit === "boolean") cacheHit = snapshot.cache_hit;
           break;
         }
         case "RUN_FINISHED":
@@ -202,8 +211,11 @@ export async function askTutor(request: TutorAskRequest, handlers: AskHandlers):
             status,
             conversation_id: conversationId,
             provider,
+            model,
+            degraded,
+            // memory chưa làm — để đúng false thay vì bịa ra một cờ luôn bật.
             memory_used: false,
-            cache_hit: false,
+            cache_hit: cacheHit,
           });
           return;
         case "RUN_ERROR":

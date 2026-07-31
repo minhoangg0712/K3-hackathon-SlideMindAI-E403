@@ -1,6 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { randomUUID } from "node:crypto";
 import { encodeAguiEvent, type AguiEvent, type AguiRequest } from "@/lib/agui";
+import { cacheKey, readCache, replayChunks, writeCache } from "@/lib/answer-cache";
+import { appendTurn } from "@/lib/conversation-store";
 import {
   loadSlideDocument,
   searchCourse,
@@ -190,10 +192,46 @@ export async function POST(request: Request) {
   const messageId = `msg_${randomUUID()}`;
   const toolCallId = `tc_${randomUUID()}`;
 
+  // Chữ ký câu hỏi đã sắp xếp token, nên "attention là gì" và "gì là
+  // attention" dùng chung một ô cache; từ phủ định vẫn được giữ.
+  const key = cacheKey(question, scope?.material_id, scope?.page_number, MODEL_CASCADE[0] ?? "mock");
+  const cached = body.forwardedProps?.skipCache ? null : readCache(key);
+
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
         sse({ type: "RUN_STARTED", threadId: body.threadId, runId: body.runId }, controller);
+
+        // --- Trả lại từ cache ----------------------------------------------
+        // Phát lại đúng chuỗi event như một lượt thật để UI không phải biết
+        // mình đang xem bản lưu; khác biệt duy nhất là cache_hit và độ trễ.
+        if (cached) {
+          sse({ type: "TEXT_MESSAGE_START", messageId }, controller);
+          for (const delta of replayChunks(cached.answer)) {
+            sse({ type: "TEXT_MESSAGE_CONTENT", messageId, delta }, controller);
+            await new Promise((resolve) => setTimeout(resolve, 6));
+          }
+          sse({ type: "TEXT_MESSAGE_END", messageId }, controller);
+          sse(
+            {
+              type: "STATE_SNAPSHOT",
+              snapshot: {
+                message_id: messageId,
+                citations: cached.citations,
+                confidence: cached.confidence,
+                status: cached.citations.length > 0 ? "answered" : "not_found",
+                provider: cached.provider,
+                model: cached.model,
+                degraded: false,
+                cache_hit: true,
+              },
+            },
+            controller,
+          );
+          sse({ type: "RUN_FINISHED", threadId: body.threadId, runId: body.runId }, controller);
+          closeQuietly(controller);
+          return;
+        }
 
         // --- Truy hồi nội dung slide (tool search_slides) -------------------
         let hits: SlideHit[] = [];
@@ -384,18 +422,56 @@ export async function POST(request: Request) {
             quote: hit.quote,
           }));
 
+        // Đoạn lấy từ tài liệu khác cũng phải hiện thành nguồn, nếu không người
+        // học không biết câu trả lời đến từ buổi nào.
+        for (const hit of courseHits) {
+          citations.push({
+            document_title: hit.fileName,
+            page: hit.page,
+            section: null,
+            quote: hit.quote,
+          });
+        }
+
+        const confidence = confidenceFrom(hits, answer);
+
+        if (answer.trim()) {
+          writeCache(key, {
+            answer,
+            citations,
+            confidence,
+            model: modelUsed,
+            provider,
+          });
+
+          // Lưu ở server để F5 hay mở tab khác vẫn đọc lại được lượt này.
+          const conversationId = body.forwardedProps?.conversationId;
+          if (conversationId) {
+            appendTurn(conversationId, {
+              question,
+              answer,
+              messageId,
+              citations,
+              confidence,
+              course_id: scope?.course_id,
+              material_id: scope?.material_id,
+            });
+          }
+        }
+
         sse(
           {
             type: "STATE_SNAPSHOT",
             snapshot: {
               message_id: messageId,
               citations,
-              confidence: confidenceFrom(hits, answer),
-              status: hits.length > 0 ? "answered" : "not_found",
+              confidence,
+              status: hits.length > 0 || courseHits.length > 0 ? "answered" : "not_found",
               provider,
               model: modelUsed,
               degraded,
               usage,
+              cache_hit: false,
             },
           },
           controller,

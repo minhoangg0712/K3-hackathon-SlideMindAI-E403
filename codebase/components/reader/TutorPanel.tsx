@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bot, History, KeyRound, Plus, Send, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import { Markdown } from "@/components/reader/Markdown";
 import { useCurrentUser, useI18n } from "@/components/providers";
 import { confidenceLabel } from "@/lib/i18n";
 import {
@@ -221,15 +222,7 @@ export function TutorPanel({
                   </p>
                 ) : (
                   <div className="space-y-2 text-xs leading-relaxed text-slate-700 dark:text-slate-200">
-                    {message.text
-                      .split(/\n{2,}/)
-                      .filter(Boolean)
-                      .map((paragraph, index) => (
-                        // break-words để đường dẫn/token dài không kéo tràn panel.
-                        <p key={index} className="whitespace-pre-wrap break-words">
-                          {paragraph}
-                        </p>
-                      ))}
+                    <Markdown text={message.text} />
                     {message.streaming ? (
                       <span className="inline-block h-3 w-1.5 animate-pulse bg-[#134D8B] align-middle dark:bg-sky-400" />
                     ) : null}
@@ -305,10 +298,18 @@ export function TutorPanel({
                         Mock
                       </span>
                     ) : (
+                      // Tên model thật do server trả về, không phải nhãn cứng:
+                      // bản gốc in "Claude · live" kể cả khi chạy model khác.
                       <span className="rounded-full bg-[#134D8B]/10 px-2 py-0.5 text-[10px] font-black uppercase text-[#134D8B] dark:bg-sky-950 dark:text-sky-300">
-                        Claude · live
+                        {message.final.model ?? message.final.provider}
+                        {message.final.degraded ? " · hạ bậc" : ""}
                       </span>
                     )}
+                    {message.final.cache_hit ? (
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                        Cache
+                      </span>
+                    ) : null}
                     <span
                       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
                         message.final.status === "answered"

@@ -102,7 +102,7 @@ export interface Citation {
  * Nhà cung cấp đã sinh ra câu trả lời. Phải hiển thị lên UI: bài nộp không
  * được trình bày `mock` như thể là AI chạy thật.
  */
-export type TutorProvider = "anthropic" | "mock";
+export type TutorProvider = "gemini" | "mock";
 
 /** Kết quả cuối một lượt hỏi, khớp shape bản gốc dựng ở RUN_FINISHED. */
 export interface TutorFinal {
@@ -113,6 +113,10 @@ export interface TutorFinal {
   status: "answered" | "not_found" | "refused";
   conversation_id: string;
   provider: TutorProvider;
+  /** Model thật đã trả lời — bản gốc in nhãn cứng "Claude · live" cho mọi lượt. */
+  model?: string;
+  /** True khi phải tụt xuống bậc cascade thấp hơn; người dùng được báo. */
+  degraded?: boolean;
   memory_used: boolean;
   cache_hit: boolean;
 }
