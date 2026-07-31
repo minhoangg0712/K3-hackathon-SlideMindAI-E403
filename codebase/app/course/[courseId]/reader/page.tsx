@@ -24,6 +24,7 @@ export default function ReaderPage() {
 
   const [days, setDays] = useState<DayEntry[]>([]);
   const [documents, setDocuments] = useState<MaterialDocument[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [tutorOpen, setTutorOpen] = useState(true);
 
   useEffect(() => {
@@ -36,9 +37,13 @@ export default function ReaderPage() {
         if (controller.signal.aborted) return;
         setDays(toDayEntries(curriculum));
         setDocuments(docs.items);
+        setError(null);
       })
-      .catch(() => {
-        /* sidebar hiển thị trạng thái rỗng */
+      .catch((cause) => {
+        // Nuốt lỗi ở đây làm màn hình chỉ hiện "chưa có tài liệu", che mất
+        // nguyên nhân thật (API 404, server chưa chạy, cài đặt thiếu).
+        if (controller.signal.aborted) return;
+        setError(cause instanceof Error ? cause.message : String(cause));
       });
     return () => controller.abort();
   }, [courseCode]);
@@ -122,8 +127,11 @@ export default function ReaderPage() {
             tutorOpen={tutorOpen}
           />
         ) : (
-          <div className="flex min-w-0 flex-1 items-center justify-center bg-slate-100 text-sm text-slate-500 dark:bg-slate-900">
-            {dict.readerSidebar.noMaterials}
+          <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-2 bg-slate-100 px-6 text-center text-sm text-slate-500 dark:bg-slate-900">
+            <p>{error ? dict.readerSidebar.loadFailed : dict.readerSidebar.noMaterials}</p>
+            {error ? (
+              <p className="max-w-md font-mono text-xs text-red-600 dark:text-red-400">{error}</p>
+            ) : null}
           </div>
         )}
       </div>
